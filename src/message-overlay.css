@@ -5,7 +5,11 @@
   padding:clamp(165px,36svh,360px) 0 0;
 }
 .app-shell[data-screen=chat] .bookstore-interface {
-  display:block; width:100%; margin:0; padding:12px max(16px,2vw,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(16px,2vw,env(safe-area-inset-left));
+  display:block; width:100%; margin:0;
+  padding-block:12px max(12px,env(safe-area-inset-bottom));
+  /* Keep the backdrop edge to edge while the dialogue and reply share a reading column. */
+  --dialogue-gutter:max(1rem,calc((100% - 44rem) / 2));
+  padding-inline:max(var(--dialogue-gutter),env(safe-area-inset-left)) max(var(--dialogue-gutter),env(safe-area-inset-right));
   position:relative; overflow:visible; background:rgb(13 29 22 / 88%); color:#fbfaf4;
   backdrop-filter:none; -webkit-backdrop-filter:none; box-shadow:none;
 }
