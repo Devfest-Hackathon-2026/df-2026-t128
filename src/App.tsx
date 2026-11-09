@@ -7,8 +7,8 @@ import { request, createSessionReleaser } from './api';
 import { createSessionCleanup } from './session-cleanup';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import type { ProviderMode, Reflection, Scenario, Session, SessionResponse } from '../shared/types';
-import { ConversationExperience, ConversationHistory } from './ConversationExperience';
-import { ConversationActions, ConversationModeNote } from './ConversationActions';
+import { ConversationExperience, ConversationHistory, LinePlayback } from './ConversationExperience';
+import { ConversationModeNote } from './ConversationActions';
 import { Welcome, ScenarioSelect } from './ScenarioSelect';
 
 type Screen = 'home' | 'places' | 'chat' | 'reflection';
@@ -41,6 +41,7 @@ function App() {
   const messageAttempt = useRef(createMessageAttempt());
   const cleanup = useRef(createSessionCleanup());
   const autoReflectionFor = useRef<string | null>(null);
+  const logRef = useRef<HTMLDialogElement>(null);
   const mainRef = useRef<HTMLElement>(null);
   const [quietMotion, setQuietMotion] = useState(false);
   const [systemReduced, setSystemReduced] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -173,9 +174,16 @@ function App() {
     <main ref={mainRef} key={screen} className="screen-enter">
       {screen === 'reflection' && <div className="journey-header"><button className="text-button" onClick={() => goHome('places')}><ControlIcon name="back" /> 場所を選ぶ</button></div>}
       {screen === 'chat' && selected && <nav className="play-toolbar" aria-label="会話画面の操作">
-        <button onClick={() => goHome('places')}><ControlIcon name="back" />場所を選ぶ</button>
+        <button onClick={() => goHome('places')} aria-label="場所を選ぶ" title="場所を選ぶ"><ControlIcon name="back" /></button>
         <h1>{selected.location}</h1>
         <div className="play-tools">
+          {session && <>
+            <button title="これまでのやり取り" aria-label="これまでのやり取り" aria-haspopup="dialog" onClick={() => logRef.current?.showModal()}><ControlIcon name="history" /></button>
+            <button title="会話を終えて振り返る" aria-label="会話を終えて振り返る" disabled={!!pending} onClick={() => void end('finish')}><ControlIcon name="review" /></button>
+            <button title="手助けを断られたので終える" aria-label="手助けを断られたので終える" disabled={!!pending} onClick={() => void end('respect')}><ControlIcon name="leave" /></button>
+            <button title="危険を感じたので中断する" aria-label="危険を感じたので中断する" disabled={pending === 'end'} onClick={() => void end('emergency')}><ControlIcon name="interrupt" /></button>
+          </>}
+          <LinePlayback scenario={selected} session={session} cloudVoice={cloudVoice} waiting={pending === 'message'} voiceOn={voiceOn} />
           <button aria-label="セリフを自動で読み上げる" aria-pressed={voiceOn} title={voiceOn ? '音声をオフにする' : '音声をオンにする'} onClick={() => setVoiceOn(v => !v)}><ControlIcon name={voiceOn ? 'sound' : 'mute'} /></button>
           {motionControl('play-motion')}<FullscreenControl /></div>
       </nav>}
@@ -185,27 +193,29 @@ function App() {
       {screen === 'places' && <ScenarioSelect scenarios={scenarios} loading={booting} ready={ready} onSelect={selectScenario} />}
 
       {screen === 'chat' && selected && <section className="novel-experience">
-        <ConversationExperience voiceOn={voiceOn} cloudVoice={cloudVoice} scenario={selected} session={session} waiting={pending === 'message'} reducedMotion={reducedMotion} />
+        <ConversationExperience scenario={selected} session={session} reducedMotion={reducedMotion}>
         {!session ? <fieldset className="opening-actions" disabled={!!pending || !ready}>
           <legend>この言葉を聞いて、まずどうしますか？</legend>
           {selected.actions.map(action => <button type="button" key={action.id} value={action.id} onClick={() => void start(action.id)}>{action.label}</button>)}
         </fieldset> : <>
         <div className="story-controls">
           <form onSubmit={sendMessage} className="composer" aria-busy={pending === 'message'}>
-            <label htmlFor="message-input">相手にどう返しますか？</label>
-            <textarea id="message-input" value={draft} onChange={event => setDraft(event.target.value)} maxLength={500} rows={2} disabled={!!pending} aria-describedby={error && failedAction === 'message' ? 'message-help conversation-error' : 'message-help'} />
-            <div ref={failedAction === 'message' ? chatErrorRef : undefined}>
-            {error && failedAction === 'message' && <div id="conversation-error" className="conversation-error" role="alert"><p>{error}</p><p>入力した文章は残っています。もう一度送る場合は、下の送信ボタンを押してください。</p></div>}
-            <div className="composer-bottom"><span id="message-help">{draft.length} / 500文字 ・個人情報は入力しないでください</span><button className="primary-button small" disabled={!draft.trim() || !!pending} type="submit">{pending === 'message' ? '返答を待っています…' : error && failedAction === 'message' ? 'もう一度送る' : '声をかける'}</button></div>
+            <label className="sr-only" htmlFor="message-input">相手にどう返しますか？</label>
+            <div className="message-pill"><textarea id="message-input" placeholder={pending === 'message' ? '返事を待っています…' : '相手にどう返しますか？'} value={draft} onChange={event => setDraft(event.target.value)} maxLength={500} rows={1} disabled={!!pending} aria-describedby={error && failedAction === 'message' ? 'message-help conversation-error' : 'message-help'} />
+              <button type="submit" title={error && failedAction === 'message' ? 'もう一度送る' : '声をかける'} aria-label={error && failedAction === 'message' ? 'もう一度送る' : '声をかける'} disabled={!draft.trim() || !!pending}><ControlIcon name="send" /></button>
             </div>
+            <span id="message-help" className="sr-only">500文字まで。個人情報は入力しないでください。</span>
+            {error && failedAction === 'message' && <div id="conversation-error" className="conversation-error" role="alert" ref={chatErrorRef}><p>{error}</p><p>入力した文章は残っています。送信ボタンで再送できます。</p></div>}
           </form>
-          <ConversationModeNote mode={actualMode} />
-          <ConversationActions disabled={!!pending} onFinish={() => void end('finish')} onRespect={() => void end('respect')} />
           {error && failedAction === 'end' && <div id="conversation-error" className="conversation-error" role="alert" ref={chatErrorRef}><p>{error}</p><p>画面の会話と入力は残っています。もう一度、終了操作を試せます。</p></div>}
 
-          <button className="emergency-button" disabled={pending === 'end'} onClick={() => void end('emergency')}>危険を感じたので中断する</button>
-        </div>
-        <ConversationHistory session={session} scenario={selected} /></>}
+        </div></>}
+        </ConversationExperience>
+        {session && <dialog ref={logRef} className="history-dialog" aria-labelledby="log-heading">
+          <header><h2 id="log-heading">これまでのやり取り</h2><button title="閉じる" aria-label="閉じる" onClick={() => logRef.current?.close()}><ControlIcon name="close" /></button></header>
+          <p>{session.turnCount} / {session.maxTurns} 往復</p><ConversationModeNote mode={actualMode} />
+          <ConversationHistory session={session} scenario={selected} />
+        </dialog>}
       </section>}
 
       {screen === 'reflection' && selected && session && <section className="reflection-page">

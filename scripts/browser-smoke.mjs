@@ -81,13 +81,16 @@ try {
       await fixture(viewport, person, async page => {
         const started = await chooseAndStart(page, scene, person);
         assert.equal(started.characterId, person);
+        await page.getByRole('button',{name:'これまでのやり取り'}).click();
+        await assertions(page.getByRole('dialog')).toBeVisible();
+        await page.getByRole('button',{name:'閉じる',exact:true}).click();
         await assertions(page.locator('.conversation-mode-note')).toContainText('用意した返事');
         await assertions(page.locator('.scene-image-status')).toBeEmpty();
         await checkLayout(page);
         const before = await page.locator('.bookstore-person[data-visible="true"]').boundingBox();
         await page.getByLabel('相手にどう返しますか？').fill('何かお手伝いできることはありますか。');
         await page.getByRole('button', { name: '声をかける', exact: true }).click();
-        await assertions(page.locator('.bookstore-interface')).toContainText('1 / 5 往復');
+        await assertions(page.locator('.history-dialog')).toContainText('1 / 5 往復');
         await assertions(page.locator('.scene-image-status')).toBeEmpty();
         const after = await page.locator('.bookstore-person[data-visible="true"]').boundingBox();
         // Page scrolling is allowed; the image frame dimensions must remain fixed.
@@ -153,7 +156,7 @@ try {
     // Short viewport models limited vertical space, not an actual phone keyboard.
     await page.setViewportSize({ width: 320, height: 430 });
     await checkLayout(page);
-    await assertions(page.locator('.bookstore-interface')).toContainText('4 / 5 往復');
+    await assertions(page.locator('.history-dialog')).toContainText('4 / 5 往復');
     assert.ok(session.id);
   });
   for (const viewport of [{ width: 1440, height: 1000 }, { width: 390, height: 844 }]) {
@@ -196,12 +199,12 @@ try {
         await assertions(input).toHaveValue('いつものお茶について教えてください。');
         await assertions(input).toHaveAttribute('aria-describedby', 'message-help conversation-error');
         await assertions(page.locator('.composer')).toHaveAttribute('aria-busy', 'false');
-        await assertions(page.locator('.bookstore-interface')).toContainText('0 / 5 往復');
+        await assertions(page.locator('.history-dialog')).toContainText('0 / 5 往復');
         assert.equal(requests.length, 1);
         if (failure === 'edited-draft') await input.fill('緑の袋のお茶をお探しですか。');
         if (failure === 'unavailable') await page.screenshot({ path: `output/browser-smoke/message-error-${viewport.width}.png`, fullPage: false });
         await page.getByRole('button', { name: 'もう一度送る', exact: true }).click();
-        await assertions(page.locator('.bookstore-interface')).toContainText('1 / 5 往復');
+        await assertions(page.locator('.history-dialog')).toContainText('1 / 5 往復');
         await assertions(page.getByRole('alert')).toHaveCount(0);
         await assertions(input).toHaveValue('');
         assert.equal(requests.length, 2);

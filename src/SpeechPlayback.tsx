@@ -29,7 +29,7 @@ export function SpeechPlayback({ sessionId, messageIndex, disabled, text }: {
       <ControlIcon name={busy ? 'stop' : 'play'} />
 
     </button>
-    {state === 'unavailable' && <button type="button" disabled={disabled} onClick={() => setUseDevice(true)}>端末の声で聞く</button>}
+    {state === 'unavailable' && <button type="button" title="端末の声で聞く" aria-label="端末の声で聞く" disabled={disabled} onClick={() => setUseDevice(true)}><ControlIcon name="device" /></button>}
     <span className="listening-state" role="status" aria-live="polite">
       {state === 'unavailable' ? '音声を利用できません。文章で会話を続けられます。' : state === 'playing' ? '音声を再生しています' : state === 'ready' ? '音声の準備ができました。再生ボタンを押してください。' : ''}
     </span>

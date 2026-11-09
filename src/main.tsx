@@ -12,3 +12,5 @@ import './material.css';
 import './play-scene.css';
 
 import './practice-design.css';
+
+import './message-overlay.css';

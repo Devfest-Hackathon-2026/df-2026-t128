@@ -12,7 +12,7 @@ export function Welcome({ example, onBegin }: {example?: Scenario; onBegin: () =
       {example && <figcaption><strong>田中さん</strong><blockquote>「{example.opening}」</blockquote></figcaption>}
     </figure>
     <div className="welcome-entry">
-      <p>街で出会う架空の人物と話し、最後に自分の声のかけ方を振り返ります。</p>
+      <p>街で出会う架空の人物と話し、最後に自分の声のかけ方を振り返ります。氏名や住所などの個人情報は入力しないでください。</p>
       <p id="entry-terms" className="entry-terms">18歳以上の方が対象です。「場所を選ぶ」を押すと、18歳以上であることを確認したものとします。</p>
       <div className="practice-begin"><button className="primary-button" aria-describedby="entry-terms" onClick={onBegin}>場所を選ぶ</button><span>1回 約3分</span></div>
     </div>
