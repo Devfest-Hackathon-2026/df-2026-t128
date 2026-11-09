@@ -62,17 +62,17 @@
 .opening-actions { margin: 0 auto; max-width: 48rem; border: 0; padding: 1rem clamp(16px,4vw,48px) 2rem; }
 .opening-actions legend { padding-top: 1rem; font-weight: 650; }
 .opening-actions button { width: 100%; min-height: 48px; padding: .8rem 0; display: flex; justify-content: space-between; align-items: center; gap: 1rem; text-align: left; border: 0; border-bottom: 1px solid #bac4b9; color: inherit; background: transparent; font: inherit; cursor: pointer; }
-.opening-actions button svg { flex: none; }
+
 
 /* Dialogue and the player's controls share one stage. Keep the face clear. */
 [data-screen=chat] .bookstore-dialogue strong {
   display:inline-block; margin-bottom:.2em; font-size:1rem; font-weight:650; color:#f5d8a0;
 }
-[data-screen=chat] .bookstore-interface { border-radius:0; border-inline-start:3px solid #d7b878; text-align:start; }
+[data-screen=chat] .bookstore-interface { border-radius:0; text-align:start; }
 [data-screen=chat] .opening-actions { min-width:0; width:100%; color:#fdfbf3; background:#193128; }
 [data-screen=chat] .opening-actions button { min-height:52px; color:inherit; border-color:#637569; }
-[data-screen=chat] .opening-actions button:is(:hover,:focus-visible) { color:#ffe4a8; background:#ffffff0f; }
-[data-screen=chat] .opening-actions button:active { background:#ffffff24; }
+[data-screen=chat] .opening-actions button:is(:hover,:focus-visible) { color:#fff; background:#ffffff20; }
+[data-screen=chat] .opening-actions button:active { background:#ffffff36; }
 [data-screen=chat] .conversation-record { width:100%; }
 @media (min-width:900px) {
   [data-screen=chat] .novel-experience {

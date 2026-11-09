@@ -15,9 +15,6 @@ type Screen = 'home' | 'places' | 'chat' | 'reflection';
 type Pending = 'start' | 'message' | 'end' | 'reflection' | null;
 
 
-function Arrow({ back = false }: { back?: boolean }) {
-  return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true" style={back ? { transform: 'rotate(180deg)' } : undefined}><path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></svg>;
-}
 
 function BrandMark() {
   return <svg width="34" height="34" viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M20 20C3 22 3 7 10 6c7-1 11 5 10 14Z" fill="#91ab8b" /><path d="M20 20C18 3 33 3 34 10c1 7-5 11-14 10Z" fill="#d9b976" /><path d="M20 20c17-2 17 13 10 14-7 1-11-5-10-14Z" fill="#4b7056" /><path d="M20 20C22 37 7 37 6 30c-1-7 5-11 14-10Z" fill="#b7c7a6" /><circle cx="20" cy="20" r="4" fill="#f7f7f0" /></svg>;
@@ -174,9 +171,9 @@ function App() {
     </header>
 
     <main ref={mainRef} key={screen} className="screen-enter">
-      {screen === 'reflection' && <div className="journey-header"><button className="text-button" onClick={() => goHome('places')}><Arrow back /> 場面一覧</button></div>}
+      {screen === 'reflection' && <div className="journey-header"><button className="text-button" onClick={() => goHome('places')}><ControlIcon name="back" /> 場面一覧</button></div>}
       {screen === 'chat' && selected && <nav className="play-toolbar" aria-label="会話画面の操作">
-        <button onClick={() => goHome('places')}><Arrow back />場面一覧</button>
+        <button onClick={() => goHome('places')}><ControlIcon name="back" />場面一覧</button>
         <h1>{selected.location}</h1>
         <div className="play-tools">
           <button aria-label="セリフを自動で読み上げる" aria-pressed={voiceOn} title={voiceOn ? '音声をオフにする' : '音声をオンにする'} onClick={() => setVoiceOn(v => !v)}><ControlIcon name={voiceOn ? 'sound' : 'mute'} /></button>
@@ -191,7 +188,7 @@ function App() {
         <ConversationExperience voiceOn={voiceOn} cloudVoice={cloudVoice} scenario={selected} session={session} waiting={pending === 'message'} reducedMotion={reducedMotion} />
         {!session ? <fieldset className="opening-actions" disabled={!!pending || !ready}>
           <legend>どうしますか？</legend>
-          {selected.actions.map(action => <button type="button" key={action.id} value={action.id} onClick={() => void start(action.id)}>{action.label}<ControlIcon name="next" /></button>)}
+          {selected.actions.map(action => <button type="button" key={action.id} value={action.id} onClick={() => void start(action.id)}>{action.label}</button>)}
         </fieldset> : <>
         <div className="story-controls">
           <ConversationModeNote mode={actualMode} />
@@ -200,7 +197,7 @@ function App() {
             <textarea id="message-input" value={draft} onChange={event => setDraft(event.target.value)} maxLength={500} rows={2} disabled={!!pending} aria-describedby={error && failedAction === 'message' ? 'message-help conversation-error' : 'message-help'} />
             <div ref={failedAction === 'message' ? chatErrorRef : undefined}>
             {error && failedAction === 'message' && <div id="conversation-error" className="conversation-error" role="alert"><p>{error}</p><p>入力した文章は残っています。もう一度送る場合は、下の送信ボタンを押してください。</p></div>}
-            <div className="composer-bottom"><span id="message-help">{draft.length} / 500文字 ・個人情報は入力しないでください</span><button className="primary-button small" disabled={!draft.trim() || !!pending} type="submit">{pending === 'message' ? '返答を待っています…' : error && failedAction === 'message' ? 'もう一度送る' : '声をかける'}<ControlIcon name="send" /></button></div>
+            <div className="composer-bottom"><span id="message-help">{draft.length} / 500文字 ・個人情報は入力しないでください</span><button className="primary-button small" disabled={!draft.trim() || !!pending} type="submit">{pending === 'message' ? '返答を待っています…' : error && failedAction === 'message' ? 'もう一度送る' : '声をかける'}</button></div>
             </div>
           </form>
           <ConversationActions disabled={!!pending} onFinish={() => void end('finish')} onRespect={() => void end('respect')} />
@@ -214,14 +211,14 @@ function App() {
       {screen === 'reflection' && selected && session && <section className="reflection-page">
         <div className="reflection-heading"><h1>{session.status === 'interrupted' ? '練習を中断しました。' : '会話の振り返り'}</h1><p>{selected.title} <span>／</span> {selected.character} <span>／</span> {session.turnCount}往復の会話</p></div>
         {session.status === 'interrupted' ? <div className="interrupted-panel"><h2>実際に危険を感じたときは、練習を離れて。</h2><p>このアプリでは緊急性の判断はできません。実際の場面ではご自身の安全を確保し、近くの職員や適切な緊急窓口に助けを求めてください。</p></div> : <>
-          {!session.messages.some(message => message.role === 'user') && <p>今回は声をかけずに会話を終えました。</p>}
-          {session.endReason === 'respect' && <div className="respect-note">手助けを望まない相手の意思を尊重し、会話を終えました。</div>}
+          {session.endReason === 'respect' ? <p className="respect-note">相手の意思を尊重して会話を終えました。</p> :
+            !session.messages.some(message => message.role === 'user') && <p>今回は声をかけずに会話を終えました。</p>}
           {reflection ? <div className="reflection-grid"><article className="reflection-card"><h2>最初に選んだ行動</h2><blockquote>{reflection.action.label}</blockquote><p>{reflection.action.observation}</p><div className="principle-box"><p>{reflection.action.principle}</p></div></article><article className="reflection-card"><h2>{!session.messages.some(m => m.role === 'user') || reflection.conversation.source === 'fixed' ? 'この場面の振り返り' : reflection.conversation.source === 'demo' ? '定型の参考コメント' : 'Geminiの参考コメント'}</h2>{reflection.conversation.quote && <blockquote>{reflection.conversation.quote}</blockquote>}<p>{reflection.conversation.observation}</p><div className="principle-box"><span>{reflection.conversation.source === 'fixed' ? '会話の終え方' : '次に試してみるなら'}</span><p>{reflection.conversation.suggestion}</p></div></article></div> : <div className="reflection-grid"><article className="reflection-card"><h2>最初に選んだ行動</h2><blockquote>{selected.actions.find(action => action.id === session.actionId)?.label}</blockquote><p>{selected.actions.find(action => action.id === session.actionId)?.reflection}</p><div className="principle-box"><p>{selected.actions.find(action => action.id === session.actionId)?.principle}</p></div></article><div className="loading-panel"><p>{pending === 'reflection' ? '会話を振り返る参考コメントを準備しています。' : '会話は終了しました。もう一度、コメントを読み込めます。'}</p><button className="secondary-button" disabled={!!pending} onClick={() => void retryReflection()}>{pending === 'reflection' ? '振り返りを準備しています…' : 'コメントを読み直す'}</button></div></div>}
           <p className="reflection-disclaimer">参考コメントは、相手の気持ちを判定するものではありません。</p>
         </>}
         <details className="transcript"><summary>今回の会話を見返す <span>{session.messages.length}件</span></summary><div>{session.messages.map((message, i) => <p key={i}><strong>{message.role === 'user' ? 'あなた' : selected.character}</strong>{message.text}</p>)}</div></details>
         <div className="reflection-actions practice-retry-actions">
-          <button className="primary-button" onClick={() => selectScenario(selected, practiceCharacterId(session))}>同じ相手でもう一度 <Arrow /></button>
+          <button className="primary-button" onClick={() => selectScenario(selected, practiceCharacterId(session))}>同じ相手でもう一度</button>
           <button className="secondary-button" onClick={() => selectScenario(selected)}>同じ場所で人物を再抽選</button>
           <button className="secondary-button" onClick={() => goHome('places')}>ほかの場所を選ぶ</button>
         </div>

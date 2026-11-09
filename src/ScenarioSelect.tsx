@@ -8,7 +8,7 @@ export function Welcome({ example, onBegin }: {example?: Scenario; onBegin: () =
     <div><h1 id="welcome-title">困っている人に、<br />何と声をかけますか？</h1>
       <p>認知症のある人を含め、街で困っている人への声のかけ方を練習します。架空の人物と話し、最後に自分の言葉を振り返ります。</p>
       <p id="entry-terms" className="entry-terms">18歳以上の方が対象です。開始すると、18歳以上であることを確認したものとします。</p>
-      <div className="practice-begin"><button className="primary-button" aria-describedby="entry-terms" onClick={onBegin}>ゲームを始める <ControlIcon name="next" /></button><span>約3分</span></div>
+      <div className="practice-begin"><button className="primary-button" aria-describedby="entry-terms" onClick={onBegin}>ゲームを始める</button><span>約3分</span></div>
     </div>
     <figure className="practice-example"><SceneStage scene="shop" thumbnail />
       {example && <figcaption><blockquote>「{example.opening}」</blockquote></figcaption>}

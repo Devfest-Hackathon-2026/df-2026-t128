@@ -26,7 +26,7 @@ export function SpeechPlayback({ sessionId, messageIndex, disabled, text }: {
       onClick={() => { if (!disabled) void player.toggle(sessionId, messageIndex); }}
       title={busy ? '読み上げを停止' : '相手の言葉を読み上げる'}
       aria-label={busy ? '読み上げを停止' : '相手の言葉を読み上げる'}>
-      <ControlIcon name={busy ? 'stop' : 'sound'} />
+      <ControlIcon name={busy ? 'stop' : 'play'} />
 
     </button>
     {state === 'unavailable' && <button type="button" disabled={disabled} onClick={() => setUseDevice(true)}>端末の声で聞く</button>}
