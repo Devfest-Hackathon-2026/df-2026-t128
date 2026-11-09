@@ -1,5 +1,5 @@
 import {unlockVoice} from './voice-output';
-import {suggestionsFor,suggestedSpeech,draftHint} from '../shared/player-input';
+import {turnChoices,draftHint} from '../shared/player-input';
 import type { CharacterId } from '../shared/scene-characters';
 import { practiceCharacterId, selectPracticeScenario } from './practice-selection';
 import { FullscreenControl } from './FullscreenControl';
@@ -189,9 +189,8 @@ function App() {
   }
 
   const lastLine=session?.messages.at(-1);
-  const suggestions=lastLine?.suggestions?.length ? lastLine.suggestions : suggestionsFor(lastLine?.text ?? selected?.opening ?? '',selected?.characterId,session?.messages.at(-2)?.text);
-  const speech=suggestedSpeech(lastLine?.text ?? selected?.opening ?? '',suggestions,selected?.id);
-  const choices=!lastLine ? ['こんにちは。','少し離れて様子を見る'] : [speech,...suggestions.filter(s=>s!==speech&&!s.includes('「'+speech+'」')&&!s.includes('『'+speech+'』'))].slice(0,2);
+  const choices=turnChoices(selected?.id ?? '', lastLine?.text, lastLine?.suggestions,
+    session?.messages.at(-2)?.text, session?.turnCount, session?.id.charCodeAt(0));
   const example=!lastLine ? '近くに寄ってもいいですか？' : draftHint(lastLine?.text ?? selected?.opening ?? '',choices,selected?.id);
   const actualMode = session?.mode || mode;
   return <div className="app-shell" data-screen={screen} data-motion={reducedMotion ? "reduced" : "full"}>

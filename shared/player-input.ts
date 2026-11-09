@@ -3,16 +3,27 @@ export type InputKind = 'speech' | 'action' | 'auto';
 export type InterpretedKind = 'speech' | 'action' | 'mixed';
 export const freeOpening: ActionOption = {id:'free-input', label:'自分の言葉や行動で応じる', reflection:'', principle:''};
 export const openingFor = (scene:Scenario, id:string) => id === freeOpening.id ? freeOpening : scene.actions.find(a => a.id === id);
-// Openings and offline demo turns do not call a model for suggestions.
-export function suggestionsFor(text:string, character:string|undefined,previous:string|undefined):string[] {
-  const next = /自分で|ひとりで|大丈夫です/.test(text) ? ['一歩離れる','「わかりました」と答える']
-    : /どちら|どこ|見つから/.test(text) ? ['どこまで一緒に探すか尋ねる','近くの表示を一緒に見る']
-    : /バス|乗り場|案内板|青いの/.test(text) ? ['案内板を指す','相手が指す方を見る']
-    : /袋|お茶|商品/.test(text) ? ['袋を見比べる時間をとる','どの袋か尋ねる']
-    : /本|表紙/.test(text) ? ['表紙を一緒に見る','本の印象を尋ねる']
-    : character==='yamamoto' ? ['少し待つ','目線の先を見る'] : ['少し待つ','希望を尋ねる'];
-  return [...new Set([...next,'少し待つ'])].filter(v=>v!==previous).slice(0,2);
+// Only visible details belong in opening choices: the player's character has not spoken yet.
+const openingChoices: Record<string, string[]> = {
+  shop: ['少し離れて、棚を見る様子を待つ', '手を伸ばした袋を指して「これですか？」'],
+  bookstore: ['顔を上げた相手に「こんにちは」', '「本をお探しですね」と棚に近づく'],
+  station: ['視界に入る位置で立ち止まる', '案内板を見ながら「どちらまで？」'],
+};
+
+export function turnChoices(place: string, line: string | undefined, generated: string[] = [], previous = '', turn = 0, seed = 0): string[] {
+  const fallback = line === undefined ? openingChoices[place]
+    : /自分で|ひとりで|一人で|手助けは|大丈夫です/.test(line) ? ['「わかりました」と一歩離れる', '離れる前に、困ったところがないか尋ねる']
+    : /放課後|図書室|友達|友人|窓際/.test(line) ? ['うなずいて話の続きを待つ', '「それで、本の題名は？」']
+    : /私に|ご用/.test(line) ? ['「急にすみません」と名乗る', '「何をお探しですか？」']
+    : /袋|緑茶|お茶/.test(line) ? ['「どの袋にしましょうか？」', '似た袋を指して「こちらですね」']
+    : /表紙|題名|本棚/.test(line) ? ['「覚えているところからどうぞ」', '題名と著者を一度に尋ねる']
+    : /案内板|乗り場|バス|桜町/.test(line) ? ['本人が見る表示を一緒に確かめる', '「乗り場をお探しですね？」']
+    : ['少し間をおいて返事を待つ', '間を置かず、別の聞き方を試す'];
+  const pair = [...new Set([...generated, ...(fallback ?? []), '少し待つ', 'もう少し詳しく尋ねる']
+    .map(v => v.trim()).filter(v => v && v !== previous))].slice(0, 2);
+  return (turn + seed) % 2 ? pair.reverse() : pair;
 }
+
 export type PlayerInputKind = InputKind;
 export function playerInputLimit(_kind: PlayerInputKind): number { return 500; }
 export function encodePlayerInput(_kind: PlayerInputKind, draft: string): string {
@@ -20,18 +31,6 @@ export function encodePlayerInput(_kind: PlayerInputKind, draft: string): string
   if (!text) throw new Error('内容を入力してください。');
   if (text.length > 500) throw new Error('入力できる文字数を超えています。');
   return text;
-}
-
-export function suggestedSpeech(line:string, choices:string[],place?:string):string {
-  for (const choice of choices) {
-    const quote=choice.match(/[「『]([^」』]+)[」』]/u)?.[1];
-    if (quote) return quote;
-    if (/(?:ですか|ますか|ですね|しょうか|ください|ませんか|[？?])。?$/u.test(choice)) return choice;
-  }
-  if (/要りません|いりません|自分で|ひとりで|一人で/.test(line)) return 'わかりました。失礼しますね。';
-  if (/一緒に|お願い/.test(line)) return 'はい、一緒に見てみましょう。';
-  if (/どちら|どこ|乗り場/.test(line)) return '一緒に確かめましょうか？';
-  return place==='shop'?'どんなお茶をお探しですか？':place==='bookstore'?'どんな本をお探しですか？':'こちらの案内を一緒に見ましょうか？';
 }
 
 // Keep the free-entry hint independent of the visible response buttons.
