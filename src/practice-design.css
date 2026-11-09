@@ -84,3 +84,26 @@ body { background: var(--ks-stage); }
 @media(min-width:701px) {
   .practice-art { height:clamp(175px,42svh,450px); }
 }
+
+/* A choice always reads from its label to the forward control on the right. */
+:root {
+  --ks-choice-fill:rgb(255 255 255 / 10%);
+  --ks-choice-hover:rgb(255 255 255 / 20%);
+  --ks-action-radius:.65rem;
+}
+.app-shell .practice-choice {
+  border-radius:var(--ks-action-radius); background:var(--ks-choice-fill);
+}
+.app-shell .practice-choice:not(:disabled):hover { background:var(--ks-choice-hover); }
+.practice-caption { padding-inline:14px; }
+.practice-arrow { padding-right:14px; }
+.app-shell :is(.practice-begin,.practice-retry-actions) button {
+  display:inline-flex; align-items:center; justify-content:center; gap:.65rem;
+  border-radius:var(--ks-action-radius); min-height:48px; font-size:1rem;
+}
+.app-shell[data-screen=reflection] .reflection-page,
+.app-shell[data-screen=reflection] .journey-header { max-width:52rem; margin-inline:auto; }
+.app-shell[data-screen=reflection] .reflection-grid {
+  display:grid; grid-template-columns:1fr; gap:1.5rem;
+}
+.app-shell[data-screen=reflection] .reflection-grid article { text-align:start; }

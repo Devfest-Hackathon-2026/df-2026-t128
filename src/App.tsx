@@ -196,7 +196,7 @@ function App() {
         <ConversationExperience scenario={selected} session={session} reducedMotion={reducedMotion}>
         {!session ? <fieldset className="opening-actions" disabled={!!pending || !ready}>
           <legend>最初の行動を選んでください</legend>
-          {selected.actions.map(action => <button type="button" key={action.id} value={action.id} onClick={() => void start(action.id)}>{action.label}</button>)}
+          {selected.actions.map(action => <button type="button" key={action.id} value={action.id} onClick={() => void start(action.id)}><span>{action.label}</span><ControlIcon name="next" /></button>)}
         </fieldset> : <>
         <div className="story-controls">
           <form onSubmit={sendMessage} className="composer" aria-busy={pending === 'message'}>
@@ -230,7 +230,7 @@ function App() {
         <div className="reflection-actions practice-retry-actions">
           <button className="primary-button" onClick={() => selectScenario(selected, practiceCharacterId(session))}>同じ人ともう一度話す</button>
           <button className="secondary-button" onClick={() => selectScenario(selected)}>同じ場所でもう一度</button>
-          <button className="secondary-button" onClick={() => goHome('places')}>ほかの場所を選ぶ</button>
+          <button className="secondary-button" onClick={() => goHome('places')}>ほかの場所を選ぶ<ControlIcon name="next" /></button>
         </div>
         <p className="storage-note">会話の履歴は最長30分で消えます。もう一度練習すると、今の会話は見返せません。</p>
       </section>}

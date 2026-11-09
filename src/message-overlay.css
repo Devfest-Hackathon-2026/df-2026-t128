@@ -22,8 +22,14 @@
   margin:0; padding:0; background:transparent; color:inherit; border:0; box-shadow:none;
 }
 .app-shell[data-screen=chat] .bookstore-interface .opening-actions { margin-top:.6rem; }
-.app-shell[data-screen=chat] .bookstore-interface .opening-actions legend { color:inherit; }
-.app-shell[data-screen=chat] .bookstore-interface .opening-actions button { min-height:44px; padding:.4rem 0; }
+.app-shell[data-screen=chat] .bookstore-interface .opening-actions legend { float:none; padding:0 0 .3rem; color:var(--ks-muted-on-stage); font-size:.9375rem; }
+.app-shell[data-screen=chat] .bookstore-interface .opening-actions button {
+  margin-top:4px; min-height:44px; padding:.5rem .875rem;
+  background:var(--ks-choice-fill); border:0; border-radius:var(--ks-action-radius); line-height:1.45;
+}
+.app-shell[data-screen=chat] .opening-actions button svg { flex:none; }
+.app-shell[data-screen=chat] .opening-actions button:not(:disabled):is(:hover,:focus-visible) { background:var(--ks-choice-hover); }
+.app-shell[data-screen=chat] .opening-actions button:focus-visible { outline-color:var(--ks-speaker); }
 .app-shell[data-screen=chat] .message-pill {
   display:flex; align-items:center; gap:4px; padding:2px 4px 2px 16px; margin-top:.65rem;
   border-radius:30px; background:#faf8ef; color:#192e23;
