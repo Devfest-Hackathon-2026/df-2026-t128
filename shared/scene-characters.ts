@@ -83,3 +83,10 @@ export function withCharacter(scene: Scenario, characterId: CharacterId): Scenar
     })) : scene.actions,
   };
 }
+
+// A visible circumstance, not an inference about the learner's body language.
+export function openingCue(scene: Scenario): string | undefined {
+  return scene.id === 'station' && (scene.characterId ?? defaultCharacterId(scene.id)) === 'yamamoto'
+    ? '山本さんは案内板を見上げてつぶやいています。まだあなたには気づいていません。'
+    : undefined;
+}

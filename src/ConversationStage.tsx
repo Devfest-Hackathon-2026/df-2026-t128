@@ -65,7 +65,7 @@ function RevealedLine({ text, reduced }: { text:string; reduced:boolean }) {
 }
 
 /** Supply an AI reply and expression together; assets can be replaced with PNG/WebP URLs. */
-export function ConversationStage({ reply, reducedMotion, children, scenario = bookstoreScenario }: { reply: BookstoreResponse; reducedMotion: boolean; children?: ReactNode; scenario?: ConversationScenario }) {
+export function ConversationStage({ cue, reply, reducedMotion, children, scenario = bookstoreScenario }: { cue?:string; reply: BookstoreResponse; reducedMotion: boolean; children?: ReactNode; scenario?: ConversationScenario }) {
   const assets = scenario.assets;
   const line = useRef<HTMLParagraphElement>(null);
   const previousLine = useRef(reply.reply);
@@ -81,6 +81,6 @@ export function ConversationStage({ reply, reducedMotion, children, scenario = b
   const [attempt, setAttempt] = useState(0);
   return <div className="bookstore-stage" data-reduced={reducedMotion}>
     <SceneLayers key={JSON.stringify([assets, attempt])} scenario={scenario} expression={reply.expression} onRetry={() => setAttempt(value => value + 1)} />
-    <div className="bookstore-interface"><div className="bookstore-dialogue"><strong>{scenario.character}</strong><span className="sr-only" role="status" aria-atomic="true">{reply.reply}</span><p ref={line} className="character-line"><RevealedLine key={reply.reply} text={reply.reply} reduced={reducedMotion} /></p></div>{children}</div>
+    <div className="bookstore-interface"><div className="bookstore-dialogue">{cue && <p>{cue}</p>}<strong>{scenario.character}</strong><span className="sr-only" role="status" aria-atomic="true">{reply.reply}</span><p ref={line} className="character-line"><RevealedLine key={reply.reply} text={reply.reply} reduced={reducedMotion} /></p></div>{children}</div>
   </div>;
 }

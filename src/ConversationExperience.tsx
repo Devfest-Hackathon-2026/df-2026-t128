@@ -1,3 +1,4 @@
+import { openingCue } from '../shared/scene-characters';
 import clips from '../shared/opening-voices.json';
 import { spokenLine } from '../shared/spoken-line';
 import type { ReactNode } from 'react';
@@ -24,7 +25,7 @@ export function LinePlayback({scenario, session, waiting, cloudVoice, voiceOn}: 
 
 export function ConversationExperience({scenario, session, reducedMotion, children}: SceneProps & {reducedMotion:boolean; children:ReactNode}) {
   const latest = [...(session?.messages ?? [])].reverse().find(message => message.role === 'assistant');
-  return <ConversationStage scenario={sceneAppearance(scenario.id, session?.characterId ?? scenario.characterId)} reducedMotion={reducedMotion} reply={{
+  return <ConversationStage cue={!session?.turnCount ? openingCue(scenario) : undefined} scenario={sceneAppearance(scenario.id, session?.characterId ?? scenario.characterId)} reducedMotion={reducedMotion} reply={{
     reply:latest?.text ?? scenario.opening, expression:latest?.expression ?? (scenario.id === 'station' ? 'confused' : 'neutral'), conversationEnded:!!session && session.status !== 'active'
   }}>{children}</ConversationStage>;
 }

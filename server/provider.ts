@@ -1,3 +1,4 @@
+import { openingCue } from '../shared/scene-characters.js';
 import {defaultCharacterId} from '../shared/scene-characters.js';
 import type {InputKind, InterpretedKind} from '../shared/player-input.js';
 import { variantDemoLine } from './scene-cast.js';
@@ -17,6 +18,12 @@ export interface Provider {
 export const demoProvider: Provider = {
   mode: 'demo',
   async reply(scenario, session, text, kind) {
+    if (session.turnCount === 0 && openingCue(scenario)) {
+      if (/^(?:こんにちは|こんにちわ|こんばんは|すみません)[。、！!？?\s]*$/u.test(text.trim()))
+        return {text:'……え、私に？', expression:'confused'};
+      if (/正面|視界|目線の高さ/.test(text) && !/ない|ずに/.test(text))
+        return {text:'（こちらに目を向ける）', expression:'neutral'};
+    }
     if ((kind === 'action' || kind === 'auto') && text === '少し待つ') {
       const person = session.characterId ?? defaultCharacterId(scenario.id);
       const focus = scenario.id === 'shop' ? '商品の袋' : scenario.id === 'station' ? '案内板' : '本棚';
