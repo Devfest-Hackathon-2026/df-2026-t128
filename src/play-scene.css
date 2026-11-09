@@ -74,31 +74,14 @@
 [data-screen=chat] .opening-actions button:is(:hover,:focus-visible) { color:#fff; background:#ffffff20; }
 [data-screen=chat] .opening-actions button:active { background:#ffffff36; }
 [data-screen=chat] .conversation-record { width:100%; }
-@media (min-width:900px) {
-  [data-screen=chat] .novel-experience {
-    display:grid; grid-template-columns:minmax(0,1fr) clamp(360px,35vw,540px);
-    grid-template-rows:minmax(calc(100svh - 56px),auto) auto;
-  }
-  [data-screen=chat] .bookstore-stage {
-    grid-area:1 / 1 / 2 / 3; padding:0; min-height:36rem; align-self:stretch;
-  }
-  [data-screen=chat] .bookstore-person { width:calc(100% - clamp(360px,35vw,540px)); object-position:center top; }
-  [data-screen=chat] .bookstore-interface {
-    margin:0 0 clamp(20px,4vh,64px) clamp(16px,3vw,64px);
-    width:min(720px,calc(100% - clamp(360px,35vw,540px) - 8vw));
-    padding:18px 24px;
-  }
-  [data-screen=chat] :is(.opening-actions,.story-controls) {
-    position:relative; grid-area:1 / 2; align-self:center; min-width:0;
-    width:calc(100% - 32px); max-width:none; margin:24px 32px 24px 0;
-    padding:20px 24px; box-shadow:0 8px 32px #11251c38;
-  }
-  [data-screen=chat] .opening-actions { background:rgba(19,39,31,.94); }
-  [data-screen=chat] .opening-actions legend { float:left; width:100%; padding:0 0 8px; color:#f5d8a0; }
-  [data-screen=chat] .story-controls { background:#fcfaf2f5; }
-  [data-screen=chat] .conversation-end-actions { grid-template-columns:1fr; gap:6px; margin:12px 0; }
-  [data-screen=chat] .conversation-record { grid-column:1/-1; max-width:none; }
-}
+/* The reply and the controls follow the same top-to-bottom reading order at every width. */
+[data-screen=chat] .novel-experience { width:min(100%,64rem); margin-inline:auto; }
+[data-screen=chat] .bookstore-stage { min-height:clamp(250px,46svh,450px); }
+[data-screen=chat] .bookstore-interface { width:100%; margin:0; padding:10px clamp(16px,3vw,32px); }
+[data-screen=chat] :is(.opening-actions,.story-controls,.conversation-record) { max-width:none; width:100%; margin:0; padding:12px clamp(16px,3vw,32px); }
+[data-screen=chat] .opening-actions legend { float:left; width:100%; padding:0 0 4px; color:#f5d8a0; }
+[data-screen=chat] .conversation-mode-note { margin:6px 0; }
+[data-screen=chat] .conversation-end-actions { margin:8px 0; }
 @media(max-width:899px) {
   [data-screen=chat] .bookstore-stage { min-height:clamp(220px,45svh,460px); }
   [data-screen=chat] .bookstore-interface { width:100%; margin:0; }

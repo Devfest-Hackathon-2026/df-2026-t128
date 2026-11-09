@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import './bookstore.css';
 
 import { expressionLabels, type BookstoreResponse } from './bookstore.config';
@@ -39,9 +39,20 @@ function SceneLayers({ scenario, expression, onRetry }: { scenario: Conversation
 /** Supply an AI reply and expression together; assets can be replaced with PNG/WebP URLs. */
 export function ConversationStage({ reply, reducedMotion, children, scenario = bookstoreScenario }: { reply: BookstoreResponse; reducedMotion: boolean; children?: ReactNode; scenario?: ConversationScenario }) {
   const assets = scenario.assets;
+  const line = useRef<HTMLParagraphElement>(null);
+  const previousLine = useRef(reply.reply);
+  useEffect(() => {
+    if (previousLine.current === reply.reply) return;
+    previousLine.current = reply.reply;
+    const el = line.current;
+    if (!el) return;
+    el.scrollTop = 0;
+    const rect = el.getBoundingClientRect();
+    if (rect.top < 0 || rect.bottom > window.innerHeight) el.scrollIntoView({block:'nearest',behavior:'instant'});
+  }, [reply.reply]);
   const [attempt, setAttempt] = useState(0);
   return <div className="bookstore-stage" data-reduced={reducedMotion}>
     <SceneLayers key={JSON.stringify([assets, attempt])} scenario={scenario} expression={reply.expression} onRetry={() => setAttempt(value => value + 1)} />
-    <div className="bookstore-interface"><div className="bookstore-dialogue"><strong>{scenario.character}</strong><p role="status" aria-live="polite">{reply.reply}</p></div>{children}</div>
+    <div className="bookstore-interface"><div className="bookstore-dialogue"><strong>{scenario.character}</strong><p ref={line} role="status" aria-live="polite">{reply.reply}</p></div>{children}</div>
   </div>;
 }

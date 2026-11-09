@@ -48,18 +48,26 @@ async function fixture(viewport, character, run) {
   }
 }
 
+async function assertReplyBefore(page, selector) {
+  const line = await page.locator('.bookstore-dialogue').boundingBox();
+  const control = await page.locator(selector).first().boundingBox();
+  assert.ok(line && control && line.y + line.height <= control.y + 1, 'Read the character before choosing or typing');
+}
+
 async function chooseAndStart(page, scene, person) {
   await page.getByRole('button', { name: scene.location, exact: true }).click();
   await assertions(page.locator('.bookstore-dialogue strong').filter({hasText: withCharacter(scene, person).character.split('（')[0]})).toBeVisible();
+  await assertReplyBefore(page, '.opening-actions');
   const response = page.waitForResponse(response => response.url().endsWith('/api/sessions') && response.request().method() === 'POST');
   await page.locator(`.opening-actions button[value="${scene.actions[1].id}"]`).click();
   return (await (await response).json()).session;
 }
 
 async function checkLayout(page) {
+  await assertReplyBefore(page, '.composer');
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'No horizontal page overflow');
   await assertions(page.locator('.bookstore-person[data-visible="true"]')).toHaveCount(1);
-  for (const name of ['声をかける', 'ここまでで振り返る', '意思を尊重して終える']) {
+  for (const name of ['声をかける', '会話を終えて振り返る', '手助けを断られたので終える']) {
     const control = page.getByRole('button', { name, exact: true });
     await control.scrollIntoViewIfNeeded();
     const box = await control.boundingBox();
@@ -77,17 +85,17 @@ try {
         await assertions(page.locator('.scene-image-status')).toBeEmpty();
         await checkLayout(page);
         const before = await page.locator('.bookstore-person[data-visible="true"]').boundingBox();
-        await page.getByLabel('あなたなら、なんと声をかけますか？').fill('何かお手伝いできることはありますか。');
+        await page.getByLabel('相手にどう返しますか？').fill('何かお手伝いできることはありますか。');
         await page.getByRole('button', { name: '声をかける', exact: true }).click();
         await assertions(page.locator('.bookstore-interface')).toContainText('1 / 5 往復');
         await assertions(page.locator('.scene-image-status')).toBeEmpty();
         const after = await page.locator('.bookstore-person[data-visible="true"]').boundingBox();
         // Page scrolling is allowed; the image frame dimensions must remain fixed.
         assert.equal(before.width, after.width); assert.equal(before.height, after.height);
-        await page.getByRole('button', { name: person === 'sato' ? '意思を尊重して終える' : 'ここまでで振り返る', exact: true }).click();
-        await assertions(page.getByRole('heading', { name: '会話の振り返り', exact: true })).toBeVisible();
-        await assertions(page.getByRole('heading', { name: '定型の参考コメント', exact: true })).toBeVisible();
-        await page.getByRole('button', { name: '同じ相手でもう一度', exact: false }).click();
+        await page.getByRole('button', { name: person === 'sato' ? '手助けを断られたので終える' : '会話を終えて振り返る', exact: true }).click();
+        await assertions(page.getByRole('heading', { name: '自分の声かけを振り返る', exact: true })).toBeVisible();
+        await assertions(page.getByRole('heading', { name: '声かけを見直すヒント', exact: true })).toBeVisible();
+        await page.getByRole('button', { name: '同じ人ともう一度話す', exact: false }).click();
         await assertions(page.locator('.bookstore-dialogue strong').filter({hasText: withCharacter(scene, person).character.split('（')[0]})).toBeVisible();
         assert.equal(await page.locator('.opening-actions button').count(), 3);
         const response = page.waitForResponse(response => response.url().endsWith('/api/sessions') && response.request().method() === 'POST');
@@ -117,18 +125,18 @@ try {
     });
     const session = await chooseAndStart(page, scenarios[0], 'tanaka');
     await assertions(page.locator('.scene-image-status')).toBeEmpty();
-    await page.getByLabel('あなたなら、なんと声をかけますか？').fill('こんにちは。');
+    await page.getByLabel('相手にどう返しますか？').fill('こんにちは。');
     await page.getByRole('button', { name: '声をかける', exact: true }).click();
     await assertions(page.getByRole('button', { name: '画像を再読み込み', exact: true })).toBeVisible();
     await assertions(page.locator('.bookstore-person[data-visible="true"]')).toHaveAttribute('src', /neutral\.webp$/);
-    await page.getByLabel('あなたなら、なんと声をかけますか？').fill('消えない下書き');
+    await page.getByLabel('相手にどう返しますか？').fill('消えない下書き');
     allowImage = true;
     await page.getByRole('button', { name: '画像を再読み込み', exact: true }).click();
     await assertions(page.locator('.scene-image-status')).toBeEmpty();
-    await assertions(page.getByLabel('あなたなら、なんと声をかけますか？')).toHaveValue('消えない下書き');
+    await assertions(page.getByLabel('相手にどう返しますか？')).toHaveValue('消えない下書き');
     await assertions(page.locator('.bookstore-person[data-visible="true"]')).toHaveAttribute('src', /relieved\.webp$/);
     for (const expression of ['confused', 'cautious', 'neutral']) {
-      await page.getByLabel('あなたなら、なんと声をかけますか？').fill('ご希望を聞かせてください。');
+      await page.getByLabel('相手にどう返しますか？').fill('ご希望を聞かせてください。');
       await page.getByRole('button', { name: '声をかける', exact: true }).click();
       await assertions(page.locator('.bookstore-person[data-visible="true"]')).toHaveAttribute('src', new RegExp(expression + '\\.webp$'));
     }
@@ -169,14 +177,14 @@ try {
           } else if (failure === 'offline') await route.abort('connectionfailed');
           else await route.fulfill({ status: 503, json: { error: 'ただいま混み合っています。少し待ってから再度お試しください。' } });
         });
-        const input = page.getByLabel('あなたなら、なんと声をかけますか？');
+        const input = page.getByLabel('相手にどう返しますか？');
         await input.fill('いつものお茶について教えてください。');
         await page.getByRole('button', { name: '声をかける', exact: true }).click();
         try {
           await assertions(page.locator('.composer')).toHaveAttribute('aria-busy', 'true');
           await assertions(input).toBeDisabled();
-          await assertions(page.getByRole('button', { name: 'ここまでで振り返る', exact: true })).toBeDisabled();
-          await assertions(page.getByRole('button', { name: '意思を尊重して終える', exact: true })).toBeDisabled();
+          await assertions(page.getByRole('button', { name: '会話を終えて振り返る', exact: true })).toBeDisabled();
+          await assertions(page.getByRole('button', { name: '手助けを断られたので終える', exact: true })).toBeDisabled();
           // Duplicate form submission cannot issue a second logical send while waiting.
           await page.locator('.composer').evaluate(form => form.requestSubmit());
           await assertions(page.locator('.bookstore-dialogue')).toHaveText(before);
@@ -206,20 +214,20 @@ try {
     }
     await fixture(viewport, 'sato', async page => {
       await chooseAndStart(page, scenarios[1], 'sato');
-      const input = page.getByLabel('あなたなら、なんと声をかけますか？');
+      const input = page.getByLabel('相手にどう返しますか？');
       await input.fill('終了時にも残る下書き');
       let attempts = 0;
       await page.route('**/end', async route => {
         if (++attempts === 1) await route.fulfill({ status: 503, json: { error: '終了を確認できませんでした。もう一度お試しください。' } });
         else await route.continue();
       });
-      await page.getByRole('button', { name: '意思を尊重して終える', exact: true }).click();
+      await page.getByRole('button', { name: '手助けを断られたので終える', exact: true }).click();
       await assertions(page.getByRole('alert')).toBeInViewport();
       await assertions(page.getByRole('alert')).toContainText('画面の会話と入力は残っています');
       await assertions(input).toHaveValue('終了時にも残る下書き');
       await assertions(page.getByRole('button', { name: 'もう一度送る', exact: true })).toHaveCount(0);
-      await page.getByRole('button', { name: '意思を尊重して終える', exact: true }).click();
-      await assertions(page.getByRole('heading', { name: '会話の振り返り', exact: true })).toBeVisible();
+      await page.getByRole('button', { name: '手助けを断られたので終える', exact: true }).click();
+      await assertions(page.getByRole('heading', { name: '自分の声かけを振り返る', exact: true })).toBeVisible();
       await assertions(page.locator('.respect-note')).toBeVisible();
       await assertions(page.getByRole('alert')).toHaveCount(0);
       assert.equal(attempts, 2);

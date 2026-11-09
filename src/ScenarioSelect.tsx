@@ -5,14 +5,17 @@ import './scenario-select.css';
 
 export function Welcome({ example, onBegin }: {example?: Scenario; onBegin: () => void}) {
   return <section className="practice-welcome" aria-labelledby="welcome-title">
-    <div><h1 id="welcome-title">困っている人に、<br />何と声をかけますか？</h1>
-      <p>認知症のある人を含め、街で困っている人への声のかけ方を練習します。架空の人物と話し、最後に自分の言葉を振り返ります。</p>
-      <p id="entry-terms" className="entry-terms">対象は18歳以上です。「場所を選ぶ」を押すと、18歳以上であることを確認したものとします。</p>
-      <div className="practice-begin"><button className="primary-button" aria-describedby="entry-terms" onClick={onBegin}>場所を選ぶ</button><span>約3分</span></div>
+    <div className="welcome-intro"><h1 id="welcome-title">認知症のある人との<br />会話を練習する</h1>
+      <p>お茶を一緒に探してほしい人も、自分で探したい人もいます。まずは相手の言葉を聞いて、どう応じるか考えてみてください。</p>
     </div>
     <figure className="practice-example"><SceneStage scene="shop" thumbnail />
       {example && <figcaption><strong>田中さん</strong><blockquote>「{example.opening}」</blockquote></figcaption>}
     </figure>
+    <div className="welcome-entry">
+      <p>街で出会う架空の人物と話し、最後に自分の声のかけ方を振り返ります。</p>
+      <p id="entry-terms" className="entry-terms">18歳以上の方が対象です。「場所を選ぶ」を押すと、18歳以上であることを確認したものとします。</p>
+      <div className="practice-begin"><button className="primary-button" aria-describedby="entry-terms" onClick={onBegin}>場所を選ぶ</button><span>1回 約3分</span></div>
+    </div>
   </section>;
 }
 
@@ -20,7 +23,7 @@ export function ScenarioSelect({ scenarios, loading, ready, onSelect }: {
   scenarios: Scenario[]; loading: boolean; ready: boolean; onSelect: (scenario: Scenario) => void;
 }) {
   return <section id="scenarios" className="practice-list" aria-labelledby="scene-select-title">
-    <h1 id="scene-select-title">どの場所で話しかけますか？</h1>
+    <h1 id="scene-select-title">どこで会話を練習しますか？</h1>
     {loading ? <p role="status">読み込み中…</p> : <div className="practice-grid">
       {scenarios.map(s => <button key={s.id} id={'start-'+s.id} className="practice-choice" disabled={!ready} onClick={() => onSelect(s)}>
         <span className="practice-art" aria-hidden="true"><SceneStage scene={s.id} thumbnail /></span>

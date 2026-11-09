@@ -23,6 +23,6 @@ export function ConversationExperience({ scenario, session, waiting, reducedMoti
 
 export function ConversationHistory({ session, scenario }: {session: Session; scenario: Scenario}) {
   return <div className="conversation-record">
-    <details className="story-history"><summary>ここまでの会話を見る <span>{session.messages.length}件</span></summary><div>{session.messages.map((message, i) => <p key={i}><strong>{message.role === 'user' ? 'あなた' : scenario.character}</strong>{message.text}</p>)}</div></details>
+    <details className="story-history"><summary>これまでのやり取り <span>{session.messages.length}件</span></summary><div>{session.messages.map((message, i) => <p key={i}><strong>{message.role === 'user' ? 'あなた' : scenario.character}</strong>{message.text}</p>)}</div></details>
   </div>;
 }
