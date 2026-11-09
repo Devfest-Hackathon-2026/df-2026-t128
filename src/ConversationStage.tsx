@@ -31,7 +31,7 @@ function SceneLayers({ scenario, expression, onRetry }: { scenario: Conversation
       alt={visible === frame ? `${scenario.character}（架空の人物）：${expressionLabels[visible]}の表情` : ''} aria-hidden={visible !== frame} />)}
     <div className="scene-image-status" role="status" aria-live="polite">
       {progress.failed ? <><p>画像を読み込めませんでした。文章で会話を続けられます。</p><button type="button" onClick={onRetry}>画像を再読み込み</button></>
-        : progress.loading ? <p>画像を読み込んでいます。会話はそのまま続けられます。</p> : null}
+        : progress.loading ? <p>画像を読み込み中…</p> : null}
     </div>
   </>;
 }
