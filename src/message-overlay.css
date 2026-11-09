@@ -95,3 +95,7 @@ button[data-tip]:focus-visible::after { visibility:visible; }
 .turn-suggestions[data-pending=true] { visibility:hidden; opacity:0; }
 .turn-suggestions { transition:opacity .16s ease-out; }
 @media(prefers-reduced-motion:reduce){ .turn-suggestions {transition:none;} }
+
+@media (hover: hover) and (pointer: fine) {
+  .message-pill .insert-hint { display: none; }
+}

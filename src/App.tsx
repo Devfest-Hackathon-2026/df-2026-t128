@@ -1,5 +1,5 @@
 import {unlockVoice} from './voice-output';
-import {suggestionsFor,exampleFor} from '../shared/player-input';
+import {suggestionsFor,suggestedSpeech,draftHint} from '../shared/player-input';
 import type { CharacterId } from '../shared/scene-characters';
 import { practiceCharacterId, selectPracticeScenario } from './practice-selection';
 import { FullscreenControl } from './FullscreenControl';
@@ -190,8 +190,9 @@ function App() {
 
   const lastLine=session?.messages.at(-1);
   const suggestions=lastLine?.suggestions?.length ? lastLine.suggestions : suggestionsFor(lastLine?.text ?? selected?.opening ?? '',selected?.characterId,session?.messages.at(-2)?.text);
-  const example=exampleFor(lastLine?.text ?? selected?.opening ?? '',suggestions,selected?.id);
-  const choices=[example,...suggestions.filter(s=>s!==example&&!s.includes('「'+example+'」')&&!s.includes('『'+example+'』'))].slice(0,2);
+  const speech=suggestedSpeech(lastLine?.text ?? selected?.opening ?? '',suggestions,selected?.id);
+  const choices=[speech,...suggestions.filter(s=>s!==speech&&!s.includes('「'+speech+'」')&&!s.includes('『'+speech+'』'))].slice(0,2);
+  const example=draftHint(lastLine?.text ?? selected?.opening ?? '',choices,selected?.id);
   const actualMode = session?.mode || mode;
   return <div className="app-shell" data-screen={screen} data-motion={reducedMotion ? "reduced" : "full"}>
     <header className="site-header">
@@ -229,6 +230,7 @@ function App() {
           <form onSubmit={sendMessage} className="composer" aria-busy={pending === 'message'}>
             <label className="sr-only" htmlFor="message-input">発言や行動を入力</label>
             <div className="message-pill"><textarea id="message-input" onKeyDown={handleReplyKeyDown} placeholder={pending === 'message' ? '返事を待っています…' : '例：'+example} value={draft} onChange={event => setDraft(event.target.value)} maxLength={500} rows={1} disabled={!!pending} aria-describedby={error && failedAction === 'message' ? 'message-help conversation-error' : 'message-help'} />
+              {!draft && !pending && <button type="button" className="insert-hint" aria-label="例文を入力" onClick={() => {setDraft(example);document.getElementById('message-input')?.focus();}}>↳</button>}
               <button type="submit" data-tip={error && failedAction === 'message' ? 'もう一度送る' : '送信'} aria-label={error && failedAction === 'message' ? 'もう一度送る' : '送信'} disabled={!draft.trim() || !!pending}><ControlIcon name="send" /></button>
             </div>
             <span id="message-help" className="sr-only">500文字まで。空欄でTabを押すと例文が入ります。Enterで送信、Shift＋Enterで改行。個人情報は入力しないでください。</span>

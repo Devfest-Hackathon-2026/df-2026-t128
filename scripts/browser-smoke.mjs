@@ -23,7 +23,7 @@ async function fixture(viewport, character, run) {
   const server = app.listen(0, '127.0.0.1');
   await once(server, 'listening');
   const origin = `http://127.0.0.1:${server.address().port}`;
-  const context = await browser.newContext({ viewport, reducedMotion: 'reduce' });
+  const context = await browser.newContext({ viewport, hasTouch: viewport.width <= 390, reducedMotion: 'reduce' });
   const page = await context.newPage();
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
@@ -86,8 +86,11 @@ try {
       const sample=(await input.getAttribute('placeholder')).replace(/^例：/,'');
       await input.focus();await input.press('Tab');await assertions(input).toHaveValue(sample);
       await input.press('Tab');await assertions(input).not.toBeFocused();
-      await input.fill('');await page.getByRole('button',{name:sample,exact:true}).click();
-      await assertions(input).toHaveValue(sample);
+      await input.fill('');
+      const options=page.getByRole('group',{name:'応じ方の候補'}).getByRole('button');
+      assert.ok(!(await options.allTextContents()).includes(sample));
+      if(width===390){await page.getByRole('button',{name:'例文を入力'}).tap();await assertions(input).toHaveValue(sample);}
+      const other=await options.first().innerText();await options.first().click();await assertions(input).toHaveValue(other);
       await input.fill('一歩離れて、少し待つ');
       const sent = [];
       await page.route('**/messages', async route => {
