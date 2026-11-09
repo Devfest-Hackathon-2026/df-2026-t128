@@ -21,3 +21,17 @@ export function encodePlayerInput(_kind: PlayerInputKind, draft: string): string
   if (text.length > 500) throw new Error('入力できる文字数を超えています。');
   return text;
 }
+
+// Keep the example and its tappable choice identical. Prefer an actual quoted
+// utterance from this turn, not an instruction describing what to say.
+export function exampleFor(line:string, choices:string[],place?:string):string {
+  for (const choice of choices) {
+    const quote=choice.match(/[「『]([^」』]+)[」』]/u)?.[1];
+    if (quote) return quote;
+    if (/(?:ですか|ますか|ですね|しょうか|ください|ませんか|[？?])。?$/u.test(choice)) return choice;
+  }
+  if (/要りません|いりません|自分で|ひとりで|一人で/.test(line)) return 'わかりました。失礼しますね。';
+  if (/一緒に|お願い/.test(line)) return 'はい、一緒に見てみましょう。';
+  if (/どちら|どこ|乗り場/.test(line)) return '一緒に確かめましょうか？';
+  return place==='shop'?'どんなお茶をお探しですか？':place==='bookstore'?'どんな本をお探しですか？':'こちらの案内を一緒に見ましょうか？';
+}

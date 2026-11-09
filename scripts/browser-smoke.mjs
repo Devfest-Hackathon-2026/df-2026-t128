@@ -69,7 +69,7 @@ async function checkLayout(page) {
   await assertReplyBefore(page, '.composer');
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'No horizontal page overflow');
   await assertions(page.locator('.bookstore-person[data-visible="true"]')).toHaveCount(1);
-  for (const name of ['送信', '会話を終える']) {
+  for (const name of ['送信', '練習を終える']) {
     const control = page.getByRole('button', { name, exact: true });
     await control.scrollIntoViewIfNeeded();
     const box = await control.boundingBox();
@@ -81,31 +81,28 @@ try {
   for (const width of [1440, 390]) {
     await fixture({ width, height: 844 }, 'sato', async page => {
       await chooseAndStart(page, scenarios[1], 'sato');
-      await page.getByRole('button', { name: '話す', exact: true }).click();
-      await page.getByLabel('返事を入力').fill('必要になったら教えてください。');
-      await page.getByRole('button', { name: '行動する', exact: true }).click();
-      const input = page.getByLabel('行動を入力');
-      await assertions(input).toHaveValue('');
-      await assertions(input).toHaveAttribute('maxlength', '500');
+      const input=page.getByLabel('発言や行動を入力');
+      await assertions(page.getByRole('group',{name:'入力方法'})).toHaveCount(0);
+      const sample=(await input.getAttribute('placeholder')).replace(/^例：/,'');
+      await input.focus();await input.press('Tab');await assertions(input).toHaveValue(sample);
+      await input.press('Tab');await assertions(input).not.toBeFocused();
+      await input.fill('');await page.getByRole('button',{name:sample,exact:true}).click();
+      await assertions(input).toHaveValue(sample);
       await input.fill('一歩離れて、少し待つ');
-      await page.getByRole('button', { name: '話す', exact: true }).click();
-      await assertions(page.getByLabel('返事を入力')).toHaveValue('必要になったら教えてください。');
-      await page.getByRole('button', { name: '行動する', exact: true }).click();
-      await assertions(input).toHaveValue('一歩離れて、少し待つ');
       const sent = [];
       await page.route('**/messages', async route => {
         sent.push(route.request().postDataJSON());
         if (sent.length === 1) await route.fulfill({ status: 503, json: { error: '試験用の行動送信失敗' } });
         else await route.continue();
       });
-      await page.getByRole('button', { name: '行動を伝える', exact: true }).click();
+      await page.getByRole('button', { name: '送信', exact: true }).click();
       await assertions(page.getByRole('alert')).toContainText('試験用の行動送信失敗');
       await assertions(input).toHaveValue('一歩離れて、少し待つ');
       await page.getByRole('button', { name: 'もう一度送る', exact: true }).click();
       await assertions(input).toHaveValue('');
       assert.equal(sent.length, 2);
       assert.equal(sent[0].text, '一歩離れて、少し待つ');
-      assert.equal(sent[0].kind, 'action');
+      assert.equal(sent[0].kind, 'auto');
       assert.equal(sent[0].requestId, sent[1].requestId);
       await assertions(page.locator('.story-history')).toContainText('一歩離れて、少し待つ');
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
@@ -136,18 +133,18 @@ try {
     await assertions(page.getByRole('group',{name:'入力の種類'})).toHaveCount(0);
     await page.getByLabel('発言や行動を入力').fill('案内板の隣で少し待つ');
     await page.getByRole('button',{name:'送信',exact:true}).click();
-    const option=page.getByRole('group',{name:'行動の候補'}).getByRole('button').first();
+    const option=page.getByRole('group',{name:'応じ方の候補'}).getByRole('button').first();
     const choice=await option.innerText();await option.click();
     await assertions(page.getByLabel('発言や行動を入力')).toHaveValue(choice);
     await page.getByLabel('発言や行動を入力').fill('少し待つ');
     await page.getByRole('button',{name:'送信',exact:true}).click();
     await assertions(page.locator('.character-line')).toHaveText('（案内板に目を向ける）');
-    await page.getByRole('button',{name:'おまかせ',exact:true}).click();
+    const finish = page.getByRole('group',{name:'応じ方の候補'}).getByRole('button',{name:'練習を終えて振り返る'});
+    await assertions(finish).toHaveCount(0);
     await page.getByLabel('発言や行動を入力').fill('ここにいますね。');
     await page.getByRole('button',{name:'送信',exact:true}).click();
     await assertions(page.locator('.story-history strong').filter({hasText:'あなたの行動'})).toHaveCount(2);
-    await page.getByRole('button',{name:'会話を終える',exact:true}).click();
-    await page.getByRole('button',{name:'振り返る',exact:true}).click();
+    await finish.click();
     await assertions(page.locator('.reflection-grid')).toBeVisible();
   });
   for (const viewport of [{ width: 1440, height: 1000 }, { width: 390, height: 844 }]) {
@@ -169,7 +166,7 @@ try {
         const after = await page.locator('.bookstore-person[data-visible="true"]').boundingBox();
         // Page scrolling is allowed; the image frame dimensions must remain fixed.
         assert.equal(before.width, after.width); assert.equal(before.height, after.height);
-        await page.getByRole('button',{name:'会話を終える',exact:true}).click();
+        await page.getByRole('button',{name:'練習を終える',exact:true}).click();
         await page.getByRole('button', { name: '振り返る', exact: true }).click();
         await assertions(page.getByRole('heading', { name: '自分の声かけを振り返る', exact: true })).toBeVisible();
         await assertions(page.getByRole('heading', { name: '声かけを見直すヒント', exact: true })).toBeVisible();
@@ -260,7 +257,7 @@ try {
         try {
           await assertions(page.locator('.composer')).toHaveAttribute('aria-busy', 'true');
           await assertions(input).toBeDisabled();
-          await page.getByRole('button',{name:'会話を終える',exact:true}).click();
+          await page.getByRole('button',{name:'練習を終える',exact:true}).click();
           await assertions(page.getByRole('button', { name: '振り返る', exact: true })).toBeDisabled();
           await assertions(page.getByRole('button', { name: '振り返らずに中断', exact: true })).toBeEnabled();
           await page.getByRole('button',{name:'閉じる',exact:true}).click();
@@ -300,13 +297,13 @@ try {
         if (++attempts === 1) await route.fulfill({ status: 503, json: { error: '終了を確認できませんでした。もう一度お試しください。' } });
         else await route.continue();
       });
-      await page.getByRole('button',{name:'会話を終える',exact:true}).click();
+      await page.getByRole('button',{name:'練習を終える',exact:true}).click();
       await page.getByRole('button', { name: '振り返る', exact: true }).click();
       await assertions(page.getByRole('alert')).toBeInViewport();
       await assertions(page.getByRole('alert')).toContainText('画面の会話と入力は残っています');
       await assertions(input).toHaveValue('終了時にも残る下書き');
       await assertions(page.getByRole('button', { name: 'もう一度送る', exact: true })).toHaveCount(0);
-      await page.getByRole('button',{name:'会話を終える',exact:true}).click();
+      await page.getByRole('button',{name:'練習を終える',exact:true}).click();
       await page.getByRole('button', { name: '振り返る', exact: true }).click();
       await assertions(page.getByRole('heading', { name: '自分の声かけを振り返る', exact: true })).toBeVisible();
       await assertions(page.locator('.respect-note')).toHaveCount(0);

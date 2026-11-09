@@ -1,5 +1,5 @@
 import {unlockVoice} from './voice-output';
-import {suggestionsFor,encodePlayerInput,playerInputLimit,type PlayerInputKind} from '../shared/player-input';
+import {suggestionsFor,exampleFor} from '../shared/player-input';
 import type { CharacterId } from '../shared/scene-characters';
 import { practiceCharacterId, selectPracticeScenario } from './practice-selection';
 import { FullscreenControl } from './FullscreenControl';
@@ -34,11 +34,8 @@ function App() {
   const [adultConfirmed, setAdultConfirmed] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
   const [reflection, setReflection] = useState<Reflection | null>(null);
-  const [inputKind, setInputKind] = useState<PlayerInputKind>('auto');
-  const [drafts, setDrafts] = useState({ auto: '', speech: '', action: '' });
-  const draft = drafts[inputKind];
-  function setDraft(value: string) { setDrafts(previous => ({ ...previous, [inputKind]: value })); }
-  function resetComposer() { setDrafts({ auto: '', speech: '', action: '' }); setInputKind('auto'); }
+  const [draft,setDraft]=useState('');
+  function resetComposer(){setDraft('');}
   const [pending, setPending] = useState<Pending>(null);
   const [error, setError] = useState('');
   const [failedAction, setFailedAction] = useState<'message' | 'end' | null>(null);
@@ -150,6 +147,9 @@ function App() {
     finally { if (current === operation.current) { starting.current = false; setPending(null); } }
   }
   function handleReplyKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+    if (event.key === 'Tab' && !draft && !pending && !event.shiftKey && !event.ctrlKey && !event.altKey && !event.metaKey && !event.nativeEvent.isComposing && event.nativeEvent.keyCode!==229) {
+      event.preventDefault();setDraft(example);return;
+    }
     if (event.key !== 'Enter' || event.shiftKey || event.altKey || event.ctrlKey || event.metaKey) return;
     // IMEs can report keyCode 229 when Enter confirms a conversion.
     if (event.nativeEvent.isComposing || event.nativeEvent.keyCode === 229) return;
@@ -163,8 +163,8 @@ function App() {
     if (!session || !draft.trim() || pending || messageAttempt.current.sending || !ready || session.status !== 'active') return;
     const current = ++operation.current; setPending('message'); setError('');
     try {
-      const result = await messageAttempt.current.send(session.id, encodePlayerInput(inputKind, draft), body =>
-        request<SessionResponse>(`/api/sessions/${session.id}/messages`, body), inputKind);
+      const result = await messageAttempt.current.send(session.id, draft, body =>
+        request<SessionResponse>(`/api/sessions/${session.id}/messages`, body), 'auto');
       if (current === operation.current) { accept(result); setDraft(''); }
     } catch (reason) { if (current === operation.current) { setFailedAction('message'); setError(reason instanceof Error ? reason.message : '送信できませんでした。'); } }
     finally { if (current === operation.current) setPending(null); }
@@ -190,6 +190,8 @@ function App() {
 
   const lastLine=session?.messages.at(-1);
   const suggestions=lastLine?.suggestions?.length ? lastLine.suggestions : suggestionsFor(lastLine?.text ?? selected?.opening ?? '',selected?.characterId,session?.messages.at(-2)?.text);
+  const example=exampleFor(lastLine?.text ?? selected?.opening ?? '',suggestions,selected?.id);
+  const choices=[example,...suggestions.filter(s=>s!==example&&!s.includes('「'+example+'」')&&!s.includes('『'+example+'』'))].slice(0,2);
   const actualMode = session?.mode || mode;
   return <div className="app-shell" data-screen={screen} data-motion={reducedMotion ? "reduced" : "full"}>
     <header className="site-header">
@@ -206,7 +208,7 @@ function App() {
         <div className="play-tools">
           {session && <>
             <button data-tip="これまでのやり取り" aria-label="これまでのやり取り" aria-haspopup="dialog" onClick={() => logRef.current?.showModal()}><ControlIcon name="history" /></button>
-            <button data-tip="会話を終える" aria-label="会話を終える" aria-haspopup="dialog" onClick={() => endRef.current?.showModal()}><ControlIcon name="leave" /></button>
+            <button data-tip="練習を終える" aria-label="練習を終える" aria-haspopup="dialog" onClick={() => endRef.current?.showModal()}><ControlIcon name="leave" /></button>
           </>}
           <LinePlayback scenario={selected} session={session} cloudVoice={cloudVoice} waiting={pending === 'message'} voiceOn={voiceOn} />
           <button aria-label="セリフを自動で読み上げる" aria-pressed={voiceOn} data-tip={voiceOn ? '音声をオフにする' : '音声をオンにする'} onClick={() => {if(!voiceOn)unlockVoice();setVoiceOn(v => !v);}}><ControlIcon name={voiceOn ? 'sound' : 'mute'} /></button>
@@ -223,26 +225,20 @@ function App() {
           {pending === 'start' ? <p role="status">会話を準備しています…</p> : <button className="primary-button" onClick={() => void start(selected)}>もう一度開始する</button>}
         </div> : <>
         <div className="story-controls">
-          {session && <div className="turn-suggestions" key={session.turnCount} data-pending={!!pending} role="group" aria-label="行動の候補">{suggestions.map(text => <button key={text} disabled={!!pending} onClick={() => { setInputKind('auto');setDrafts(previous=>({...previous,auto:text})); document.getElementById('message-input')?.focus();}}>{text}</button>)}</div>}
+          {session && <div className="turn-suggestions" key={session.turnCount} data-pending={!!pending} role="group" aria-label="応じ方の候補">{choices.map(text => <button key={text} disabled={!!pending} onClick={() => { setDraft(text); document.getElementById('message-input')?.focus();}}>{text}</button>)}{session.turnCount>=3 && <button disabled={!!pending} onClick={()=>void end('finish')}>練習を終えて振り返る</button>}</div>}
           <form onSubmit={sendMessage} className="composer" aria-busy={pending === 'message'}>
-            <div className="input-kind-controls" role="group" aria-label="入力方法">
-              <button type="button" aria-pressed={inputKind === 'auto'} disabled={!!pending} onClick={() => { setInputKind('auto'); setError(''); setFailedAction(null); }}>おまかせ</button>
-              <button type="button" aria-pressed={inputKind === 'speech'} disabled={!!pending} onClick={() => { setInputKind('speech'); setError(''); setFailedAction(null); }}>話す</button>
-              <button type="button" aria-pressed={inputKind === 'action'} disabled={!!pending} onClick={() => { setInputKind('action'); setError(''); setFailedAction(null); }}>行動する</button>
+            <label className="sr-only" htmlFor="message-input">発言や行動を入力</label>
+            <div className="message-pill"><textarea id="message-input" onKeyDown={handleReplyKeyDown} placeholder={pending === 'message' ? '返事を待っています…' : '例：'+example} value={draft} onChange={event => setDraft(event.target.value)} maxLength={500} rows={1} disabled={!!pending} aria-describedby={error && failedAction === 'message' ? 'message-help conversation-error' : 'message-help'} />
+              <button type="submit" data-tip={error && failedAction === 'message' ? 'もう一度送る' : '送信'} aria-label={error && failedAction === 'message' ? 'もう一度送る' : '送信'} disabled={!draft.trim() || !!pending}><ControlIcon name="send" /></button>
             </div>
-            <label className="sr-only" htmlFor="message-input">{inputKind === 'action' ? '行動を入力' : inputKind === 'speech' ? '返事を入力' : '発言や行動を入力'}</label>
-            <div className="message-pill"><textarea id="message-input" onKeyDown={handleReplyKeyDown} placeholder={pending === 'message' ? '返事を待っています…' : inputKind === 'action' ? '例：少し待つ、一歩離れて様子を見る' : inputKind === 'speech' ? '返事を入力' : '発言や行動を入力'} value={draft} onChange={event => setDraft(event.target.value)} maxLength={playerInputLimit(inputKind)} rows={1} disabled={!!pending} aria-describedby={error && failedAction === 'message' ? 'message-help conversation-error' : 'message-help'} />
-              <button type="submit" data-tip={error && failedAction === 'message' ? 'もう一度送る' : inputKind === 'action' ? '行動を伝える' : inputKind === 'speech' ? '声をかける' : '送信'} aria-label={error && failedAction === 'message' ? 'もう一度送る' : inputKind === 'action' ? '行動を伝える' : inputKind === 'speech' ? '声をかける' : '送信'} disabled={!draft.trim() || !!pending}><ControlIcon name="send" /></button>
-            </div>
-            <span id="message-help" className="sr-only">{playerInputLimit(inputKind)}文字まで。Enterで送信、Shift＋Enterで改行。個人情報は入力しないでください。</span>
-            {inputKind === 'action' && <p className="action-input-note">相手にする行動を入力します。相手の同意や結果は返答で確かめます。</p>}
+            <span id="message-help" className="sr-only">500文字まで。空欄でTabを押すと例文が入ります。Enterで送信、Shift＋Enterで改行。個人情報は入力しないでください。</span>
             {error && failedAction === 'message' && <div id="conversation-error" className="conversation-error" role="alert" ref={chatErrorRef}><p>{error}</p><p>入力した文章は残っています。送信ボタンで再送できます。</p></div>}
           </form>
           {error && failedAction === 'end' && <div id="conversation-error" className="conversation-error" role="alert" ref={chatErrorRef}><p>{error}</p><p>画面の会話と入力は残っています。もう一度、終了操作を試せます。</p></div>}
 
         </div></>}
         </ConversationExperience>
-        {session && <dialog className="history-dialog end-dialog" ref={endRef} aria-labelledby="end-heading"><header><h2 id="end-heading">会話を終える</h2><button aria-label="閉じる" autoFocus onClick={() => endRef.current?.close()}><ControlIcon name="close" /></button></header>
+        {session && <dialog className="history-dialog end-dialog" ref={endRef} aria-labelledby="end-heading"><header><h2 id="end-heading">練習を終える</h2><button aria-label="閉じる" autoFocus onClick={() => endRef.current?.close()}><ControlIcon name="close" /></button></header>
             <button disabled={!!pending} onClick={() => { endRef.current?.close(); void end('finish') }}>振り返る</button>
             <button disabled={pending === 'end'} onClick={() => { endRef.current?.close(); void end('emergency') }}>振り返らずに中断</button>
         </dialog>}
