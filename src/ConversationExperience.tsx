@@ -1,7 +1,7 @@
-import { openingCue } from '../shared/scene-characters';
-import clips from '../shared/opening-voices.json';
+import { entryNarration } from '../shared/scene-characters';
 import { spokenLine } from '../shared/spoken-line';
 import type { ReactNode } from 'react';
+import { ControlIcon } from './ControlIcon';
 import { DeviceVoice } from './DeviceVoice';
 import type { Scenario, Session } from '../shared/types';
 import { ConversationStage } from './ConversationStage';
@@ -12,21 +12,19 @@ type SceneProps = {scenario: Scenario; session: Session | null};
 export function LinePlayback({scenario, session, waiting, cloudVoice, voiceOn}: SceneProps & {
   waiting:boolean; cloudVoice:boolean; voiceOn:boolean;
 }) {
-  if (!voiceOn) return null;
-  const index = session?.messages.reduce((n,m,i)=>m.role === 'assistant' ? i : n,-1) ?? 0;
-  const text = spokenLine(session?.messages[index]?.text ?? scenario.opening);
+  if (!voiceOn || !session) return null;
+  const index = session.messages.reduce((last,m,i) => m.role === 'assistant' ? i : last, -1);
+  if (index < 0) return <button type="button" disabled aria-label="セリフをもう一度聞く"><ControlIcon name="play" /></button>;
+  const text = spokenLine(session.messages[index].text);
   if (!text) return null;
-  const key=(scenario.id+'-'+scenario.characterId) as keyof typeof clips;
-  const opening=index===0 && clips[key]===scenario.opening ? '/voices/'+key+'.mp3' : undefined;
-  if(!session && !(cloudVoice && opening))return null;
-  return cloudVoice ? <SpeechPlayback key={opening ?? session?.id+':'+index+':'+waiting} opening={opening} text={text} sessionId={opening?'':session!.id} messageIndex={index} disabled={waiting || (!!session && session.status !== 'active')} />
+  return cloudVoice ? <SpeechPlayback key={session.id+':'+index+':'+waiting} text={text} sessionId={session.id} messageIndex={index} disabled={waiting || session.status !== 'active'} />
     : <DeviceVoice key={index} text={text} enabled disabled={waiting || (!!session && session.status !== 'active')} />;
 }
 
 export function ConversationExperience({scenario, session, reducedMotion, children}: SceneProps & {reducedMotion:boolean; children:ReactNode}) {
   const latest = [...(session?.messages ?? [])].reverse().find(message => message.role === 'assistant');
-  return <ConversationStage cue={!session?.turnCount ? openingCue(scenario) : undefined} scenario={sceneAppearance(scenario.id, session?.characterId ?? scenario.characterId)} reducedMotion={reducedMotion} reply={{
-    reply:latest?.text ?? scenario.opening, expression:latest?.expression ?? (scenario.id === 'station' ? 'confused' : 'neutral'), conversationEnded:!!session && session.status !== 'active'
+  return <ConversationStage narrating={!latest} scenario={sceneAppearance(scenario.id, session?.characterId ?? scenario.characterId)} reducedMotion={reducedMotion} reply={{
+    reply:latest?.text ?? entryNarration(scenario), expression:latest?.expression ?? (scenario.id === 'station' ? 'confused' : 'neutral'), conversationEnded:!!session && session.status !== 'active'
   }}>{children}</ConversationStage>;
 }
 

@@ -96,7 +96,7 @@ export function createApp(provider: Provider, options: { ttlMs?: number; now?: (
     const scenario = cast && withConversationEntry(cast, actionId);
     if (!scenario || !openingFor(scenario, actionId)) { res.status(400).json({ error: 'シナリオと行動の組み合わせを確認してください。' }); return; }
     if (sessions.size >= (options.maxSessions ?? 100)) { res.status(503).json({ error: 'ただいま体験が混み合っています。時間をおいて再度お試しください。' }); return; }
-    const session: Session = { id: randomUUID(), scenarioId, ...(characterId ? { characterId } : {}), actionId, status: 'active', turnCount: 0, maxTurns: MAX_TURNS, messages: [{ role: 'assistant', text: scenario.opening, ...(characterId ? { expression: characterId === 'yamamoto' ? 'confused' as const : characterId === 'sato' ? 'cautious' as const : 'neutral' as const } : {}) }], mode: provider.mode };
+    const session: Session = { id: randomUUID(), scenarioId, ...(characterId ? { characterId } : {}), actionId, status: 'active', turnCount: 0, maxTurns: MAX_TURNS, messages: actionId === directConversationAction.id ? [] : [{ role: 'assistant', text: scenario.opening, ...(characterId ? { expression: characterId === 'yamamoto' ? 'confused' as const : characterId === 'sato' ? 'cautious' as const : 'neutral' as const } : {}) }], mode: provider.mode };
     const selectedAction = openingFor(scenario, actionId)!;
     if (selectedAction.endOnSelection === 'respect') {
       session.status = 'completed';

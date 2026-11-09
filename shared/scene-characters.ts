@@ -90,3 +90,10 @@ export function openingCue(scene: Scenario): string | undefined {
     ? '山本さんは案内板を見上げてつぶやいています。まだあなたには気づいていません。'
     : undefined;
 }
+
+export function entryNarration(scene: Scenario): string {
+  const name = characters[scene.characterId ?? defaultCharacterId(scene.id)].name;
+  if (scene.id === 'shop') return `お茶の売り場で、${name}が棚を端から端まで見ています。ひとつの袋に手を伸ばし、また手を戻しました。`;
+  if (scene.id === 'bookstore') return `本棚の前で、${name}が一冊ずつ背表紙を目で追っています。あなたが近くに来ると、ふと顔を上げました。`;
+  return `駅の案内板の前で、${name}が立ち止まっています。矢印を目で追っていて、まだあなたには気づいていません。`;
+}

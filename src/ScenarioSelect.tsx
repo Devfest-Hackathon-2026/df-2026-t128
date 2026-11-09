@@ -1,3 +1,4 @@
+import { entryNarration } from '../shared/scene-characters';
 import { ControlIcon } from './ControlIcon';
 import type { Scenario } from '../shared/types';
 import { SceneStage } from './SceneStage';
@@ -9,7 +10,7 @@ export function Welcome({ example, onBegin }: {example?: Scenario; onBegin: () =
       <p>街で出会う架空の人物と話し、最後に自分の声のかけ方を振り返ります。</p>
     </div>
     <figure className="practice-example"><SceneStage scene="shop" thumbnail />
-      {example && <figcaption><strong>田中さん</strong><blockquote>「{example.opening}」</blockquote></figcaption>}
+      {example && <figcaption>{entryNarration(example)}</figcaption>}
     </figure>
     <div className="welcome-entry">
       <p>氏名や住所などの個人情報は入力しないでください。</p>

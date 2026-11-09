@@ -112,10 +112,11 @@ test('omitting the initial action starts active conversations for all nine combi
       assert.equal(session.status, 'active');
       assert.equal(session.characterId, characterId);
       assert.equal(session.actionId, directConversationAction.id);
-      assert.equal(session.messages.length, 1);
+      assert.deepEqual(session.messages, []);
       const reply = await request(`/api/sessions/${session.id}/messages`, { text: 'こんにちは。' });
       assert.equal(reply.status, 200);
       assert.equal(reply.body.session.turnCount, 1);
+      assert.deepEqual(reply.body.session.messages.map((m: {role:string}) => m.role), ['user', 'assistant']);
       assert.equal((await request(`/api/sessions/${session.id}/end`, { reason: 'finish' })).status, 200);
       const result = await request(`/api/sessions/${session.id}/reflection`, {});
       assert.equal(result.status, 200);

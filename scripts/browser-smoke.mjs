@@ -155,6 +155,8 @@ try {
       await fixture(viewport, person, async page => {
         const started = await chooseAndStart(page, scene, person);
         assert.equal(started.characterId, person);
+        assert.deepEqual(started.messages, []);
+        await assertions(page.locator('.bookstore-dialogue strong')).toHaveCount(0);
         await page.getByRole('button',{name:'これまでのやり取り'}).click();
         await assertions(page.getByRole('dialog')).toBeVisible();
         await page.getByRole('button',{name:'閉じる',exact:true}).click();
@@ -179,7 +181,7 @@ try {
         await assertions(page.getByLabel('発言や行動を入力')).toBeEnabled();
         await assertions(page.locator('.opening-actions')).toHaveCount(0);
         assert.equal(restarted.characterId, person); assert.notEqual(restarted.id, started.id);
-        assert.equal(restarted.messages.length, 1); assert.equal(restarted.turnCount, 0);
+        assert.equal(restarted.messages.length, 0); assert.equal(restarted.turnCount, 0);
         if (scene.id === 'bookstore' && person === 'sato') {
           await assertions(page.locator('.scene-image-status')).toBeEmpty();
           await page.evaluate(() => window.scrollTo(0, 0));

@@ -1,3 +1,4 @@
+import { directConversationAction } from '../shared/conversation-entry.js';
 import { openingCue } from '../shared/scene-characters.js';
 import {defaultCharacterId} from '../shared/scene-characters.js';
 import type {InputKind, InterpretedKind} from '../shared/player-input.js';
@@ -102,7 +103,7 @@ export function createProvider(env: NodeJS.ProcessEnv = process.env): Provider {
       const history = session.messages.map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.kind === 'action' ? 'プレイヤーの行動：' + m.text : m.kind === 'mixed' ? 'プレイヤーの行動と発言：' + m.text : m.text }] }));
       // The initial assistant line is supplied as scenario context, followed by user/model turns.
       const contents = [
-        { role: 'user', parts: [{ text: `この場面の練習を始めます。最初の言葉は「${scenario.opening}」です。` }] },
+        ...(session.actionId === directConversationAction.id ? [] : [{ role: 'user', parts: [{ text: `この場面の練習を始めます。最初の言葉は「${scenario.opening}」です。` }] }]),
         ...history, { role: 'user', parts: [{ text: kind === 'action' ? 'プレイヤーの行動：' + text : text }] },
       ];
       const result = await generate(system + '\nJSONでtextに人物のセリフ、expressionにその人物自身がこの瞬間に見せる表情（neutral:通常、confused:戸惑い、cautious:慎重、relieved:安心）を返す。自然な普段の応答はneutral。練習者の良し悪しや病状を表情で評価しない。', contents, {
