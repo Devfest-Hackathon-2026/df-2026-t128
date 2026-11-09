@@ -168,14 +168,14 @@ function App() {
 
   const actualMode = session?.mode || mode;
   const motionLabel = systemReduced ? '端末設定により動きを停止中' : reducedMotion ? '動きを再生' : '動きを一時停止';
-  const motionControl = (className: string) => <button className={className} data-tip={motionLabel}
+  const motionControl = <button className="play-motion" data-tip={motionLabel}
     aria-label={motionLabel} disabled={systemReduced} onClick={() => setQuietMotion(v => !v)}>
     <ControlIcon name={reducedMotion ? 'play' : 'pause'} />
   </button>;
   return <div className="app-shell" data-screen={screen} data-motion={reducedMotion ? "reduced" : "full"}>
     <header className="site-header">
       <button className="brand" onClick={() => goHome()} aria-label="KindSignal ホームへ"><BrandMark /><span>KindSignal<span className="brand-dot">.</span></span></button>
-      <div className="header-right">{motionControl('motion-toggle')}{ready && actualMode === 'demo' && <span className="mode-note">定型応答</span>}</div>
+      {ready && actualMode === 'demo' && <div className="header-right"><span className="mode-note">定型応答</span></div>}
     </header>
 
     <main ref={mainRef} key={screen} className="screen-enter" data-tools-open={toolsOpen}>
@@ -191,7 +191,7 @@ function App() {
           </>}
           <LinePlayback scenario={selected} session={session} cloudVoice={cloudVoice} waiting={pending === 'message'} voiceOn={voiceOn} />
           <button aria-label="セリフを自動で読み上げる" aria-pressed={voiceOn} data-tip={voiceOn ? '音声をオフにする' : '音声をオンにする'} onClick={() => setVoiceOn(v => !v)}><ControlIcon name={voiceOn ? 'sound' : 'mute'} /></button>
-          {motionControl('play-motion')}<FullscreenControl /></div>
+          {motionControl}<FullscreenControl /></div>
       </nav>}
       {error && (screen !== 'chat' || !failedAction) && <div className="error-banner" role="alert"><span>{error}</span>{!ready && !booting && <button onClick={() => void initialize()}>再読み込み</button>}</div>}
 
