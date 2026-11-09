@@ -195,13 +195,13 @@ function App() {
       {screen === 'chat' && selected && <section className="novel-experience">
         <ConversationExperience scenario={selected} session={session} reducedMotion={reducedMotion}>
         {!session ? <fieldset className="opening-actions" disabled={!!pending || !ready}>
-          <legend>この言葉を聞いて、まずどうしますか？</legend>
+          <legend>最初の行動を選んでください</legend>
           {selected.actions.map(action => <button type="button" key={action.id} value={action.id} onClick={() => void start(action.id)}>{action.label}</button>)}
         </fieldset> : <>
         <div className="story-controls">
           <form onSubmit={sendMessage} className="composer" aria-busy={pending === 'message'}>
-            <label className="sr-only" htmlFor="message-input">相手にどう返しますか？</label>
-            <div className="message-pill"><textarea id="message-input" placeholder={pending === 'message' ? '返事を待っています…' : '相手にどう返しますか？'} value={draft} onChange={event => setDraft(event.target.value)} maxLength={500} rows={1} disabled={!!pending} aria-describedby={error && failedAction === 'message' ? 'message-help conversation-error' : 'message-help'} />
+            <label className="sr-only" htmlFor="message-input">返事を入力</label>
+            <div className="message-pill"><textarea id="message-input" placeholder={pending === 'message' ? '返事を待っています…' : '返事を入力'} value={draft} onChange={event => setDraft(event.target.value)} maxLength={500} rows={1} disabled={!!pending} aria-describedby={error && failedAction === 'message' ? 'message-help conversation-error' : 'message-help'} />
               <button type="submit" title={error && failedAction === 'message' ? 'もう一度送る' : '声をかける'} aria-label={error && failedAction === 'message' ? 'もう一度送る' : '声をかける'} disabled={!draft.trim() || !!pending}><ControlIcon name="send" /></button>
             </div>
             <span id="message-help" className="sr-only">500文字まで。個人情報は入力しないでください。</span>

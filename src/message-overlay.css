@@ -2,12 +2,17 @@
 .app-shell[data-screen=chat] .novel-experience { width:100%; }
 .app-shell[data-screen=chat] .bookstore-stage {
   justify-content:flex-end; align-items:center;
-  padding:clamp(165px,36svh,360px) clamp(8px,3vw,40px) max(12px,env(safe-area-inset-bottom));
+  padding:clamp(165px,36svh,360px) 0 0;
 }
 .app-shell[data-screen=chat] .bookstore-interface {
-  display:block; width:min(100%,54rem); margin:0; padding:12px clamp(14px,2vw,24px);
-  background:rgb(13 29 22 / 84%); color:#fbfaf4;
-  backdrop-filter:blur(5px); -webkit-backdrop-filter:blur(5px);
+  display:block; width:100%; margin:0; padding:12px max(16px,2vw,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(16px,2vw,env(safe-area-inset-left));
+  position:relative; overflow:visible; background:rgb(13 29 22 / 88%); color:#fbfaf4;
+  backdrop-filter:none; -webkit-backdrop-filter:none; box-shadow:none;
+}
+.app-shell[data-screen=chat] .bookstore-interface::before {
+  content:""; position:absolute; inset:auto 0 100%; height:clamp(32px,7svh,72px);
+  background:linear-gradient(to bottom,transparent,rgb(13 29 22 / 88%));
+  pointer-events:none;
 }
 .app-shell[data-screen=chat] .bookstore-interface :is(.opening-actions,.story-controls,.composer) {
   margin:0; padding:0; background:transparent; color:inherit; border:0; box-shadow:none;
