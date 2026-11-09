@@ -74,6 +74,14 @@ function App() {
     messageAttempt.current.clear();
   }, []);
   useEffect(() => {
+    const leaveDocument = (event: PageTransitionEvent) => {
+      // A cached page can return with its conversation intact. A reload/close cannot.
+      if (!event.persisted) cleanup.current.leave();
+    };
+    window.addEventListener('pagehide', leaveDocument);
+    return () => window.removeEventListener('pagehide', leaveDocument);
+  }, []);
+  useEffect(() => {
     const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
     const update = () => setReducedMotion(preference.matches);
     preference.addEventListener('change', update);
