@@ -5,17 +5,18 @@ import { sceneAppearance } from './scene-appearance';
 import { SpeechPlayback } from './SpeechPlayback';
 
 export function ConversationExperience({ scenario, session, waiting, reducedMotion, voiceOn, cloudVoice }: {
-  voiceOn: boolean; cloudVoice: boolean; scenario: Scenario; session: Session; waiting: boolean; reducedMotion: boolean;
+  voiceOn: boolean; cloudVoice: boolean; scenario: Scenario; session: Session | null; waiting: boolean; reducedMotion: boolean;
 }) {
-  const latest = [...session.messages].reverse().find(message => message.role === 'assistant');
-  const latestIndex = session.messages.reduce((found, message, index) => message.role === 'assistant' ? index : found, -1);
+  const latest = [...(session?.messages ?? [])].reverse().find(message => message.role === 'assistant');
+  const latestIndex = session?.messages.reduce((found, message, index) => message.role === 'assistant' ? index : found, -1) ?? -1;
   return <>
 
-    <ConversationStage key={session.id} scenario={sceneAppearance(scenario.id, session.characterId ?? scenario.characterId)} reducedMotion={reducedMotion} reply={{
-      reply: latest?.text ?? scenario.opening, expression: latest?.expression ?? (scenario.id === 'station' ? 'confused' : 'neutral'), conversationEnded: session.status !== 'active',
+    <ConversationStage scenario={sceneAppearance(scenario.id, session?.characterId ?? scenario.characterId)} reducedMotion={reducedMotion} reply={{
+      reply: latest?.text ?? scenario.opening, expression: latest?.expression ?? (scenario.id === 'station' ? 'confused' : 'neutral'), conversationEnded: !!session && session.status !== 'active',
     }}>
-      <p role="status">{waiting ? '返答を待っています…' : `${session.turnCount} / ${session.maxTurns} 往復`}</p>
+      {session && <><p role="status">{waiting ? '返答を待っています…' : `${session.turnCount} / ${session.maxTurns} 往復`}</p>
       {cloudVoice && voiceOn ? <SpeechPlayback text={latest?.text ?? scenario.opening} key={`${session.id}:${latestIndex}:${waiting}`} sessionId={session.id} messageIndex={latestIndex} disabled={waiting || session.status !== 'active'} /> : <DeviceVoice key={latestIndex} text={latest?.text ?? scenario.opening} enabled={voiceOn} disabled={waiting || session.status !== 'active'} />}
+    </>}
     </ConversationStage>
   </>;
 }

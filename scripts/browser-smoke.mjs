@@ -14,7 +14,7 @@ const require = createRequire(import.meta.url);
 const { chromium, expect } = require(process.argv[2] ? resolve(process.argv[2]) : 'playwright/test');
 // The standalone playwright package also exposes assertions through its /test entry.
 const assertions = expect ?? require(resolve(process.argv[2], 'test')).expect;
-const browser = await chromium.launch({ headless: true, ...(process.platform === 'win32' ? { channel: 'msedge' } : {}) });
+const browser = await chromium.launch({ headless: true, ...(process.platform === 'win32' ? { channel: 'msedge' } : {channel: 'chromium'}) });
 await mkdir('output/browser-smoke', { recursive: true });
 let completed = 0;
 
@@ -32,9 +32,9 @@ async function fixture(viewport, character, run) {
   await context.route('**/*', route => route.request().url().startsWith(origin + '/') ? route.continue() : route.abort());
   try {
     await page.goto(origin);
-    await assertions(page.getByRole('button', { name: 'タッチしてスタート', exact: false })).toBeVisible();
-    await page.getByRole('button', { name: 'タッチしてスタート', exact: false }).click();
+    await assertions(page.locator('.practice-choice')).toHaveCount(0);
     await page.getByRole('button', { name: 'ゲームを始める', exact: false }).click();
+    await assertions(page.locator('.practice-welcome')).toHaveCount(0);
     await run(page, origin);
     assert.deepEqual(errors, []);
     completed++;
@@ -49,11 +49,10 @@ async function fixture(viewport, character, run) {
 }
 
 async function chooseAndStart(page, scene, person) {
-  await page.getByRole('button', { name: scene.location + 'で話す（人物はランダム）', exact: true }).click();
-  await assertions(page.getByText('今回の相手：' + withCharacter(scene, person).character, { exact: true })).toBeVisible();
-  await page.locator(`input[value="${scene.actions[1].id}"]`).check();
+  await page.getByRole('button', { name: scene.location, exact: true }).click();
+  await assertions(page.locator('.bookstore-dialogue strong').filter({hasText: withCharacter(scene, person).character.split('（')[0]})).toBeVisible();
   const response = page.waitForResponse(response => response.url().endsWith('/api/sessions') && response.request().method() === 'POST');
-  await page.getByRole('button', { name: '会話をはじめる', exact: false }).click();
+  await page.locator(`.opening-actions button[value="${scene.actions[1].id}"]`).click();
   return (await (await response).json()).session;
 }
 
@@ -74,7 +73,7 @@ try {
       await fixture(viewport, person, async page => {
         const started = await chooseAndStart(page, scene, person);
         assert.equal(started.characterId, person);
-        await assertions(page.locator('.conversation-mode-note')).toContainText('定型応答デモ');
+        await assertions(page.locator('.conversation-mode-note')).toContainText('決まった返事');
         await assertions(page.locator('.scene-image-status')).toBeEmpty();
         await checkLayout(page);
         const before = await page.locator('.bookstore-person[data-visible="true"]').boundingBox();
@@ -89,11 +88,10 @@ try {
         await assertions(page.getByRole('heading', { name: '会話の振り返り', exact: true })).toBeVisible();
         await assertions(page.getByRole('heading', { name: '定型の参考コメント', exact: true })).toBeVisible();
         await page.getByRole('button', { name: '同じ相手でもう一度', exact: false }).click();
-        await assertions(page.getByText('今回の相手：' + withCharacter(scene, person).character, { exact: true })).toBeVisible();
-        assert.equal(await page.locator('input[name="action"]:checked').count(), 0);
-        await page.locator(`input[value="${scene.actions[2].id}"]`).check();
+        await assertions(page.locator('.bookstore-dialogue strong').filter({hasText: withCharacter(scene, person).character.split('（')[0]})).toBeVisible();
+        assert.equal(await page.locator('.opening-actions button').count(), 3);
         const response = page.waitForResponse(response => response.url().endsWith('/api/sessions') && response.request().method() === 'POST');
-        await page.getByRole('button', { name: '会話をはじめる', exact: false }).click();
+        await page.locator(`.opening-actions button[value="${scene.actions[2].id}"]`).click();
         const restarted = (await (await response).json()).session;
         assert.equal(restarted.characterId, person); assert.notEqual(restarted.id, started.id);
         assert.equal(restarted.messages.length, 1); assert.equal(restarted.turnCount, 0);

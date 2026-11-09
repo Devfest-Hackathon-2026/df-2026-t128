@@ -1,6 +1,5 @@
 import type { CharacterId } from '../shared/scene-characters';
 import { practiceCharacterId, selectPracticeScenario } from './practice-selection';
-import { StartScreen } from './StartScreen';
 import { FullscreenControl } from './FullscreenControl';
 import { ControlIcon } from './ControlIcon';
 import { createMessageAttempt } from './message-attempt';
@@ -8,12 +7,11 @@ import { request, createSessionReleaser } from './api';
 import { createSessionCleanup } from './session-cleanup';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import type { ProviderMode, Reflection, Scenario, Session, SessionResponse } from '../shared/types';
-import { SceneStage } from './SceneStage';
 import { ConversationExperience, ConversationHistory } from './ConversationExperience';
 import { ConversationActions, ConversationModeNote } from './ConversationActions';
-import { ScenarioSelect } from './ScenarioSelect';
+import { Welcome, ScenarioSelect } from './ScenarioSelect';
 
-type Screen = 'start' | 'home' | 'action' | 'chat' | 'reflection';
+type Screen = 'home' | 'places' | 'chat' | 'reflection';
 type Pending = 'start' | 'message' | 'end' | 'reflection' | null;
 
 
@@ -26,13 +24,12 @@ function BrandMark() {
 }
 
 function App() {
-  const [screen, setScreen] = useState<Screen>('start');
+  const [screen, setScreen] = useState<Screen>('home');
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
   const [mode, setMode] = useState<ProviderMode>('demo');
   const [booting, setBooting] = useState(true);
   const [ready, setReady] = useState(false);
   const [selected, setSelected] = useState<Scenario | null>(null);
-  const [actionId, setActionId] = useState('');
   const [voiceOn, setVoiceOn] = useState(true);
   const [cloudVoice,setCloudVoice] = useState(false);
   const [adultConfirmed, setAdultConfirmed] = useState(false);
@@ -104,20 +101,20 @@ function App() {
   function selectScenario(scenario: Scenario, characterId?: CharacterId) {
     cleanup.current.leave();
     messageAttempt.current.clear();
-    operation.current++; setPending(null); setSelected(selectPracticeScenario(scenarios, scenario, characterId)); setActionId('');
-    setSession(null); setReflection(null); setDraft(''); setError(''); setFailedAction(null); setScreen('action');
+    operation.current++; setPending(null); setSelected(selectPracticeScenario(scenarios, scenario, characterId));
+    setSession(null); setReflection(null); setDraft(''); setError(''); setFailedAction(null); setScreen('chat');
   }
-  function goHome() {
+  function goHome(destination: 'home' | 'places' = 'home') {
     cleanup.current.leave();
     messageAttempt.current.clear();
-    operation.current++; setPending(null); setError(''); setFailedAction(null); setScreen('home'); setSession(null); setReflection(null); setDraft('');
+    operation.current++; setPending(null); setError(''); setFailedAction(null); setScreen(destination); setSession(null); setReflection(null); setDraft('');
   }
   function accept(result: SessionResponse) {
     if (result.session.status !== 'active') messageAttempt.current.clear();
     setSession(result.session); setReflection(result.reflection);
     setScreen(result.session.status === 'active' ? 'chat' : 'reflection');
   }
-  async function start() {
+  async function start(actionId: string) {
     if (!selected || !actionId || !adultConfirmed || !ready || pending) return;
     const current = ++operation.current; setPending('start'); setError('');
     const release = createSessionReleaser();
@@ -170,41 +167,37 @@ function App() {
     aria-label={motionLabel} disabled={systemReduced} onClick={() => setQuietMotion(v => !v)}>
     <ControlIcon name={reducedMotion ? 'play' : 'pause'} />
   </button>;
-  return <div className={`app-shell ${screen === 'start' ? 'start-active' : ''}`} data-screen={screen} data-motion={reducedMotion ? "reduced" : "full"}>
+  return <div className="app-shell" data-screen={screen} data-motion={reducedMotion ? "reduced" : "full"}>
     <header className="site-header">
-      <button className="brand" onClick={goHome} aria-label="KindSignal ホームへ"><BrandMark /><span>KindSignal<span className="brand-dot">.</span></span></button>
+      <button className="brand" onClick={() => goHome()} aria-label="KindSignal ホームへ"><BrandMark /><span>KindSignal<span className="brand-dot">.</span></span></button>
       <div className="header-right">{motionControl('motion-toggle')}{ready && actualMode === 'demo' && <span className="mode-note">定型応答</span>}</div>
     </header>
 
     <main ref={mainRef} key={screen} className="screen-enter">
-      {screen !== 'start' && screen !== 'home' && screen !== 'chat' && <div className="journey-header"><button className="text-button" onClick={goHome}><Arrow back /> 場面一覧</button></div>}
+      {screen === 'reflection' && <div className="journey-header"><button className="text-button" onClick={() => goHome('places')}><Arrow back /> 場面一覧</button></div>}
       {screen === 'chat' && selected && <nav className="play-toolbar" aria-label="会話画面の操作">
-        <button onClick={goHome}><Arrow back />場面一覧</button>
-        <h1>{selected.title}</h1>
+        <button onClick={() => goHome('places')}><Arrow back />場面一覧</button>
+        <h1>{selected.location}</h1>
         <div className="play-tools">
           <button aria-label="セリフを自動で読み上げる" aria-pressed={voiceOn} title={voiceOn ? '音声をオフにする' : '音声をオンにする'} onClick={() => setVoiceOn(v => !v)}><ControlIcon name={voiceOn ? 'sound' : 'mute'} /></button>
           {motionControl('play-motion')}<FullscreenControl /></div>
       </nav>}
-      {error && screen !== 'start' && (screen !== 'chat' || !failedAction) && <div className="error-banner" role="alert"><span>{error}</span>{!ready && !booting && <button onClick={() => void initialize()}>再読み込み</button>}</div>}
+      {error && (screen !== 'chat' || !failedAction) && <div className="error-banner" role="alert"><span>{error}</span>{!ready && !booting && <button onClick={() => void initialize()}>再読み込み</button>}</div>}
 
-      {screen === 'start' && <StartScreen onStart={() => setScreen('home')} mark={<BrandMark />} />}
-      {screen === 'home' && <>
-        <ScenarioSelect started={adultConfirmed} onBegin={() => setAdultConfirmed(true)} scenarios={scenarios} loading={booting} ready={ready} onSelect={selectScenario} />
+      {screen === 'home' && <Welcome example={scenarios.find(s => s.id === 'shop')} onBegin={() => { setAdultConfirmed(true); setScreen('places'); }} />}
+      {screen === 'places' && <ScenarioSelect scenarios={scenarios} loading={booting} ready={ready} onSelect={selectScenario} />}
 
-      </>}
-
-      {screen === 'action' && selected && <section className="activity-layout">
-        <aside className={`scene-summary ${selected.accent}`}><SceneStage scene={selected.id} characterId={selected.characterId} /><h2>{selected.title}</h2><p className="selected-character">今回の相手：{selected.character}</p><p>{selected.description}</p><div className="learning-goal"><span>今回、意識してみること</span><p>{selected.goal}</p></div></aside>
-        <div className="activity-main"><h1 className="page-title">この場面で、どう動こう。</h1><p className="page-intro">最初の行動をひとつ選んでください。</p><fieldset className="action-options"><legend className="sr-only">最初の行動</legend>{selected.actions.map((action) => <label className={`action-option ${actionId === action.id ? 'selected' : ''}`} key={action.id}><input type="radio" name="action" value={action.id} checked={actionId === action.id} onChange={() => setActionId(action.id)} disabled={!!pending} /><span>{action.label}</span></label>)}</fieldset><div className="start-actions"><button className="primary-button" disabled={!actionId || !adultConfirmed || !!pending || !ready} onClick={() => void start()}>{pending === 'start' ? '体験を準備しています…' : selected.actions.find(action => action.id === actionId)?.endOnSelection === 'respect' ? '会話を終えて振り返る' : '会話をはじめる'} <Arrow /></button><p>{mode === 'demo' ? 'このモードでは、あらかじめ用意した返事が表示されます。' : '入力した言葉をGeminiに送り、返事を作ります。'}</p></div></div>
-      </section>}
-
-      {screen === 'chat' && selected && session && <section className="novel-experience">
+      {screen === 'chat' && selected && <section className="novel-experience">
         <ConversationExperience voiceOn={voiceOn} cloudVoice={cloudVoice} scenario={selected} session={session} waiting={pending === 'message'} reducedMotion={reducedMotion} />
+        {!session ? <fieldset className="opening-actions" disabled={!!pending || !ready}>
+          <legend>どうしますか？</legend>
+          {selected.actions.map(action => <button type="button" key={action.id} value={action.id} onClick={() => void start(action.id)}>{action.label}<ControlIcon name="next" /></button>)}
+        </fieldset> : <>
         <div className="story-controls">
           <ConversationModeNote mode={actualMode} />
           <form onSubmit={sendMessage} className="composer" aria-busy={pending === 'message'}>
             <label htmlFor="message-input">あなたなら、なんと声をかけますか？</label>
-            <textarea id="message-input" value={draft} onChange={event => setDraft(event.target.value)} maxLength={500} rows={2} placeholder="相手に伝えたいことを、ひと言ずつ。" disabled={!!pending} aria-describedby={error && failedAction === 'message' ? 'message-help conversation-error' : 'message-help'} />
+            <textarea id="message-input" value={draft} onChange={event => setDraft(event.target.value)} maxLength={500} rows={2} disabled={!!pending} aria-describedby={error && failedAction === 'message' ? 'message-help conversation-error' : 'message-help'} />
             <div ref={failedAction === 'message' ? chatErrorRef : undefined}>
             {error && failedAction === 'message' && <div id="conversation-error" className="conversation-error" role="alert"><p>{error}</p><p>入力した文章は残っています。もう一度送る場合は、下の送信ボタンを押してください。</p></div>}
             <div className="composer-bottom"><span id="message-help">{draft.length} / 500文字 ・個人情報は入力しないでください</span><button className="primary-button small" disabled={!draft.trim() || !!pending} type="submit">{pending === 'message' ? '返答を待っています…' : error && failedAction === 'message' ? 'もう一度送る' : '声をかける'}<ControlIcon name="send" /></button></div>
@@ -212,10 +205,10 @@ function App() {
           </form>
           <ConversationActions disabled={!!pending} onFinish={() => void end('finish')} onRespect={() => void end('respect')} />
           {error && failedAction === 'end' && <div id="conversation-error" className="conversation-error" role="alert" ref={chatErrorRef}><p>{error}</p><p>画面の会話と入力は残っています。もう一度、終了操作を試せます。</p></div>}
-          <details className="scene-context"><summary>この場面の目的と終え方</summary><p>{selected.goal}</p><p>選んだ行動：{selected.actions.find(action => action.id === session.actionId)?.label}</p><p>{selected.completionHint}</p></details>
+
           <button className="emergency-button" disabled={pending === 'end'} onClick={() => void end('emergency')}>緊急の場面として中断する</button>
         </div>
-        <ConversationHistory session={session} scenario={selected} />
+        <ConversationHistory session={session} scenario={selected} /></>}
       </section>}
 
       {screen === 'reflection' && selected && session && <section className="reflection-page">
@@ -228,14 +221,9 @@ function App() {
         </>}
         <details className="transcript"><summary>今回の会話を見返す <span>{session.messages.length}件</span></summary><div>{session.messages.map((message, i) => <p key={i}><strong>{message.role === 'user' ? 'あなた' : selected.character}</strong>{message.text}</p>)}</div></details>
         <div className="reflection-actions practice-retry-actions">
-          <button className="primary-button" aria-describedby="retry-help" onClick={() => selectScenario(selected, practiceCharacterId(session))}>同じ相手でもう一度 <Arrow /></button>
-          <button className="secondary-button" aria-describedby="reroll-help" onClick={() => selectScenario(selected)}>同じ場所で人物を再抽選</button>
-          <button className="secondary-button" onClick={goHome}>ほかの場面を選ぶ</button>
-        </div>
-        <div className="practice-retry-help">
-          <p id="retry-help">同じ相手では、同じ場所・人物で最初の行動から選び直せます。前の会話は引き継ぎません。</p>
-          <p id="reroll-help">再抽選では3人から選ばれるため、同じ人が登場する場合もあります。</p>
-          {actualMode === 'demo' && <p>定型応答モードでは、声のかけ方を変えても、同じ人物・場所では用意された返事が同じ順序で表示されます。</p>}
+          <button className="primary-button" onClick={() => selectScenario(selected, practiceCharacterId(session))}>同じ相手でもう一度 <Arrow /></button>
+          <button className="secondary-button" onClick={() => selectScenario(selected)}>同じ場所で人物を再抽選</button>
+          <button className="secondary-button" onClick={() => goHome('places')}>ほかの場所を選ぶ</button>
         </div>
         <p className="storage-note">会話の履歴は最長30分で消えます。もう一度練習すると、今の会話は見返せません。</p>
       </section>}

@@ -59,3 +59,7 @@
  .play-toolbar .play-tools { gap:0; }
  .play-toolbar .play-tools button { width:44px; min-width:44px; padding:0; }
 }
+.opening-actions { margin: 0 auto; max-width: 48rem; border: 0; padding: 1rem clamp(16px,4vw,48px) 2rem; }
+.opening-actions legend { padding-top: 1rem; font-weight: 650; }
+.opening-actions button { width: 100%; min-height: 48px; padding: .8rem 0; display: flex; justify-content: space-between; align-items: center; gap: 1rem; text-align: left; border: 0; border-bottom: 1px solid #bac4b9; color: inherit; background: transparent; font: inherit; cursor: pointer; }
+.opening-actions button svg { flex: none; }

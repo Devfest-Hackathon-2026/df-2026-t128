@@ -13,7 +13,7 @@ export function SceneStage({ scene, caption, state = 'idle', thumbnail = false, 
   if (thumbnail) return art;
   return <div className={`scene-stage stage-${scene} character-${state}`}>
     {art}
-    <div className="scene-location"><span className="location-dot" />{person.location}</div>
+    <div className="scene-location">{person.location}</div>
     {caption && <div className="scene-subtitle"><span>この場面のひと言</span><p>「{caption}」</p></div>}
     <span className="scene-fiction">架空の場面・人物</span>
   </div>;
