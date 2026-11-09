@@ -61,7 +61,7 @@ for (const action of ['end', 'delete', 'advance']) {
     });
   });
 }
-test('upstream errors are generic and per-session failed attempts capped', async () => {
+test('upstream errors are generic and per-session retry bursts are temporarily capped', async () => {
   let calls = 0;
   await fixture(async () => { calls++; throw new Error('secret'); }, async request => {
     const session = await newSession(request);

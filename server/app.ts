@@ -12,10 +12,11 @@ import type { Session, Reflection, SessionResponse } from '../shared/types.js';
 import { GenerationLimitError } from './generation-limits.js';
 import { noInputReflection, type Provider } from './provider.js';
 import { validAudio, type SpeechSynthesizer } from './speech.js';
+import { assertSafePromptText, PromptInjectionError, PROMPT_REJECTION_MESSAGE, PROMPT_HISTORY_REJECTION_MESSAGE } from './prompt-injection.js';
 
 // Only a server-side verifier may supply this stable subject, never a client header directly.
 export type Authenticate = (request: express.Request) => Promise<string | null>;
-type StoredSession = { owner: string | null; session: Session; reflection: Reflection | null; expires: number; busy: boolean; llmAttempts: number; speechBusy?: boolean; speechAttempts?: number; speech?: { index: number; audioContent: string }; messageRequests: Map<string, { kind: InputKind; text: string; committed: boolean }> };
+type StoredSession = { owner: string | null; session: Session; reflection: Reflection | null; expires: number; busy: boolean; llmAttempts: number[]; speechBusy?: boolean; speechAttempts: number[]; speech?: { index: number; audioContent: string }; messageRequests: Map<string, { kind: InputKind; text: string; committed: boolean }> };
 const startSchema = z.object({ scenarioId: z.string(), characterId: z.enum(characterIds).optional(), actionId: z.string().default(directConversationAction.id), adultConfirmed: z.literal(true) }).strict();
 const messageSchema = z.object({ kind:z.enum(['speech','action','auto']).default('speech'), text: z.string().trim().min(1).max(500), requestId: z.string().min(1).max(128).regex(/^[A-Za-z0-9_-]+$/).optional() }).strict();
 const endSchema = z.object({ reason: z.enum(['finish', 'respect', 'emergency']) }).strict();
@@ -29,6 +30,7 @@ export function createApp(provider: Provider, options: { ttlMs?: number; now?: (
   const sessions = new Map<string, StoredSession>();
   const rates = new Map<string, { count: number; until: number }>();
   const now = options.now ?? Date.now;
+  const attemptNow = options.now ?? (() => performance.now());
   const cleanup = () => {
     for (const [id, s] of sessions) if (s.expires <= now()) sessions.delete(id);
     for (const [id, r] of rates) if (r.until <= now()) rates.delete(id);
@@ -107,7 +109,7 @@ export function createApp(provider: Provider, options: { ttlMs?: number; now?: (
       res.cookie('__session', res.locals.subject, { path: '/api/sessions/' + session.id,
         httpOnly: true, sameSite: 'strict', secure: options.secureCookie ?? true, maxAge: options.ttlMs ?? TTL });
     }
-    sessions.set(session.id, { owner: res.locals.subject, session, reflection: null, expires: now() + (options.ttlMs ?? TTL), busy: false, llmAttempts: 0, messageRequests: new Map() });
+    sessions.set(session.id, { owner: res.locals.subject, session, reflection: null, expires: now() + (options.ttlMs ?? TTL), busy: false, llmAttempts: [], speechAttempts: [], messageRequests: new Map() });
     res.status(201).json({ session, reflection: null } satisfies SessionResponse);
   });
   // Explicit release when leaving an experience, not on completion: reflection
@@ -137,23 +139,32 @@ export function createApp(provider: Provider, options: { ttlMs?: number; now?: (
   const handleLimit = (error: unknown, res: express.Response) => {
     if (!(error instanceof GenerationLimitError)) return false;
     if (error.retrySeconds) res.set('Retry-After', String(error.retrySeconds));
-    res.status(error.kind === 'concurrent' ? 503 : 429).json({ error: error.kind === 'total'
-      ? 'AIの利用枠に達しました。新しい返事やコメントは表示できません。会話はここで終えられます。'
-      : 'AIの利用が集中しています。少し待ってから再度お試しください。' });
+    res.status(error.kind === 'concurrent' ? 503 : 429).json({ error: 'AIの利用が集中しています。少し待ってから再度お試しください。' });
+    return true;
+  };
+  const handlePromptRejection = (error: unknown, res: express.Response) => {
+    if (!(error instanceof PromptInjectionError)) return false;
+    res.status(400).json({ error: error.source === 'history' ? PROMPT_HISTORY_REJECTION_MESSAGE : PROMPT_REJECTION_MESSAGE });
     return true;
   };
   const fixedOnly = (stored: StoredSession) =>
     provider.mode === 'gemini' && (stored.session.endReason === 'respect' || !stored.session.messages.some(m => m.role === 'user'));
-  // Grow the session allowance with successful turns. Allow some failed
-  // attempts, but keep the final attempt available for a completed reflection.
-  const admitSession = (stored: StoredSession, res: express.Response, reflection = false) => {
-    if (provider.mode !== 'gemini' || (reflection && fixedOnly(stored))) return true;
-    const replyBudget = Math.max(9, stored.session.turnCount + 4);
-    if (stored.llmAttempts >= replyBudget + Number(reflection)) {
-      res.status(429).json({ error: 'この会話のAI利用枠に達しました。会話を終了できます。' }); return false;
+  // A retry burst pauses only this session for at most one minute. Successful
+  // turns and failed attempts share the window; waiting restores admission.
+  const admitAttempts = (attempts: number[], maximum: number, res: express.Response) => {
+    const time = attemptNow();
+    while (attempts.length && time - attempts[0] >= 60_000) attempts.shift();
+    if (attempts.length >= maximum) {
+      const wait = Math.max(1, Math.ceil((60_000 - (time - attempts[0])) / 1000));
+      res.set('Retry-After', String(wait)).status(429).json({ error: 'AIの利用が集中しています。1分ほど待ってから再度お試しください。' });
+      return false;
     }
-    stored.llmAttempts++; return true;
+    attempts.push(time);
+    return true;
   };
+  const admitSession = (stored: StoredSession, res: express.Response, reflection = false) =>
+    provider.mode !== 'gemini' || (reflection && fixedOnly(stored)) ||
+      admitAttempts(stored.llmAttempts, Math.max(9, stored.session.turnCount + 4) + Number(reflection), res);
   const reflect = async (stored: StoredSession) => {
     const baseScenario = scenarios.find(s => s.id === stored.session.scenarioId)!;
     const scenario = withConversationEntry(stored.session.characterId ? withCharacter(baseScenario, stored.session.characterId) : baseScenario, stored.session.actionId);
@@ -192,8 +203,9 @@ export function createApp(provider: Provider, options: { ttlMs?: number; now?: (
     if (!current()) { res.status(409).json({ error: 'この返答の音声再生は終了しました。' }); return; }
     if (!spokenLine(message.text)) { res.status(409).json({ error: 'この返事に音声はありません。' }); return; }
     if (stored.speech?.index === index) { res.json({ audioContent: stored.speech.audioContent }); return; }
-    if (stored.speechBusy || (stored.speechAttempts ?? 0) >= Math.min(MAX_TURNS + 3, 8 + stored.session.turnCount)) { res.status(429).json({ error: '音声を利用できません。文字で会話を続けてください。' }); return; }
-    stored.speechBusy = true; stored.speechAttempts = (stored.speechAttempts ?? 0) + 1;
+    if (stored.speechBusy) { res.set('Retry-After', '1').status(429).json({ error: '音声を準備しています。少し待ってから再度お試しください。' }); return; }
+    if (!admitAttempts(stored.speechAttempts, Math.min(MAX_TURNS + 3, 8 + stored.session.turnCount), res)) return;
+    stored.speechBusy = true;
     const stream = req.headers.accept === 'audio/x-kindsignal-pcm';
     const emit = stream ? (bytes:Buffer) => {
       if (!current() || sessions.get(stored.session.id)!==stored || now()>=stored.expires || res.destroyed) throw Error('Playback stopped');
@@ -229,6 +241,13 @@ export function createApp(provider: Provider, options: { ttlMs?: number; now?: (
     }
     if (stored.session.status !== 'active') { res.status(409).json({ error: 'この体験は終了しています。シナリオからもう一度試せます。' }); return; }
     if (stored.busy) { res.status(409).json({ error: '返答を待っています。しばらくお待ちください。' }); return; }
+    // Reject known injection phrases before reserving a rate-limit slot, storing the input,
+    // or sending anything to a model. Unexpected screening errors fail closed.
+    try { assertSafePromptText(text); }
+    catch (error) {
+      if (!handlePromptRejection(error, res)) res.status(503).json({ error: '入力を確認できませんでした。時間をおいて再送してください。' });
+      return;
+    }
     if (!capacity(res) || !admitSession(stored, res)) return;
     stored.busy = true;
     const request = { text, kind, committed: false };
@@ -255,7 +274,7 @@ export function createApp(provider: Provider, options: { ttlMs?: number; now?: (
     } catch (error) {
       if (!stillValid(stored, res)) return;
       if (stored.session.status !== 'active') { send(stored, res); return; }
-      if (handleLimit(error, res)) return;
+      if (handlePromptRejection(error, res) || handleLimit(error, res)) return;
       res.status(502).json({ error: '返答を取得できませんでした。入力は送信前の状態です。時間をおいて再送するか、振り返りへ進めます。' });
     } finally {
       stored.busy = false;
@@ -282,7 +301,7 @@ export function createApp(provider: Provider, options: { ttlMs?: number; now?: (
     if ((!fixedOnly(stored) && !capacity(res)) || !admitSession(stored, res, true)) return;
     stored.busy = true;
     try { await reflect(stored); if (stillValid(stored, res)) send(stored, res); }
-    catch (error) { if (!stillValid(stored, res) || handleLimit(error, res)) return; res.status(502).json({ error: 'コメントを表示できませんでした。もう一度読み込んでください。' }); }
+    catch (error) { if (!stillValid(stored, res) || handlePromptRejection(error, res) || handleLimit(error, res)) return; res.status(502).json({ error: 'コメントを表示できませんでした。もう一度読み込んでください。' }); }
     finally { stored.busy = false; }
   });
   app.use('/api', (_req, res) => { res.status(404).json({ error: 'APIが見つかりません。' }); });

@@ -1,6 +1,5 @@
 // Run after npm run build. No network unless --live is supplied.
 import { createProvider } from '../dist-server/server/provider.js';
-import { serviceQuota } from '../dist-server/server/durable-quota.js';
 import { withGenerationLimits } from '../dist-server/server/generation-limits.js';
 import { scenarios } from '../dist-server/shared/scenarios.js';
 
@@ -23,7 +22,7 @@ if (flag === '--dry-run') {
     throw Error('Confirm project, location and Google publisher model before running');
   }
   process.env.GOOGLE_CLOUD_QUOTA_PROJECT = project;
-  const provider = withGenerationLimits(createProvider({ ...process.env, AI_PROVIDER: 'gemini', GEMINI_BACKEND: 'vertex', AI_TIMEOUT_MS: '20000' }), undefined, undefined, serviceQuota(process.env));
+  const provider = withGenerationLimits(createProvider({ ...process.env, AI_PROVIDER: 'gemini', GEMINI_BACKEND: 'vertex', AI_TIMEOUT_MS: '20000' }));
   const start = performance.now();
   try {
     const reply = await provider.reply(scenario, session, text);
