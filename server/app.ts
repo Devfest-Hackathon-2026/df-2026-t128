@@ -1,3 +1,4 @@
+import { spokenLine } from '../shared/spoken-line.js';
 import { characterIds, characters, defaultCharacterId, withCharacter } from '../shared/scene-characters.js';
 import express from 'express';
 import { randomUUID, randomBytes } from 'node:crypto';
@@ -185,11 +186,12 @@ export function createApp(provider: Provider, options: { ttlMs?: number; now?: (
     const current = () => stored.session.status === 'active' && !stored.busy &&
       index === stored.session.messages.length - 1 && message?.role === 'assistant';
     if (!current()) { res.status(409).json({ error: 'この返答の音声再生は終了しました。' }); return; }
+    if (!spokenLine(message.text)) { res.status(409).json({ error: 'この返事に音声はありません。' }); return; }
     if (stored.speech?.index === index) { res.json({ audioContent: stored.speech.audioContent }); return; }
     if (stored.speechBusy || (stored.speechAttempts ?? 0) >= Math.min(MAX_TURNS + 3, 8 + stored.session.turnCount)) { res.status(429).json({ error: '音声を利用できません。文字で会話を続けてください。' }); return; }
     stored.speechBusy = true; stored.speechAttempts = (stored.speechAttempts ?? 0) + 1;
     try {
-      const audioContent = await options.synthesizeSpeech(message.text, characters[stored.session.characterId ?? defaultCharacterId(stored.session.scenarioId)].voiceSceneId);
+      const audioContent = await options.synthesizeSpeech(spokenLine(message.text), characters[stored.session.characterId ?? defaultCharacterId(stored.session.scenarioId)].voiceSceneId);
       if (!stillValid(stored, res)) return;
       if (!current()) { res.status(409).json({ error: '音声再生を終了しました。' }); return; }
       if (!validAudio(audioContent)) throw new Error('Invalid speech response');

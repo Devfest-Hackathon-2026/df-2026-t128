@@ -1,3 +1,4 @@
+import { spokenLine } from '../shared/spoken-line';
 import type { ReactNode } from 'react';
 import { DeviceVoice } from './DeviceVoice';
 import type { Scenario, Session } from '../shared/types';
@@ -11,7 +12,8 @@ export function LinePlayback({scenario, session, waiting, cloudVoice, voiceOn}: 
 }) {
   if (!session || !voiceOn) return null;
   const index = session.messages.reduce((n,m,i)=>m.role === 'assistant' ? i : n,-1);
-  const text = session.messages[index]?.text ?? scenario.opening;
+  const text = spokenLine(session.messages[index]?.text ?? scenario.opening);
+  if (!text) return null;
   return cloudVoice ? <SpeechPlayback key={session.id+':'+index+':'+waiting} text={text} sessionId={session.id} messageIndex={index} disabled={waiting || session.status !== 'active'} />
     : <DeviceVoice key={index} text={text} enabled disabled={waiting || session.status !== 'active'} />;
 }
