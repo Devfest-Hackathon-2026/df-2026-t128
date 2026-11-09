@@ -10,7 +10,7 @@ const openingChoices: Record<string, string[]> = {
   station: ['視界に入る位置で立ち止まる', '案内板を見ながら「どちらまで？」'],
 };
 
-export function turnChoices(place: string, line: string | undefined, generated: string[] = [], previous = '', turn = 0, seed = 0): string[] {
+export function turnChoices(place: string, line: string | undefined, generated: string[] = [], previous = '', turn = 0, seed = 0, heard = line ?? ''): string[] {
   const fallback = line === undefined ? openingChoices[place]
     : /自分で|ひとりで|一人で|手助けは|大丈夫です/.test(line) ? ['「わかりました」と一歩離れる', '離れる前に、困ったところがないか尋ねる']
     : /放課後|図書室|友達|友人|窓際/.test(line) ? ['うなずいて話の続きを待つ', '「それで、本の題名は？」']
@@ -19,7 +19,11 @@ export function turnChoices(place: string, line: string | undefined, generated: 
     : /表紙|題名|本棚/.test(line) ? ['「覚えているところからどうぞ」', '題名と著者を一度に尋ねる']
     : /案内板|乗り場|バス|桜町/.test(line) ? ['本人が見る表示を一緒に確かめる', '「乗り場をお探しですね？」']
     : ['少し間をおいて返事を待つ', '間を置かず、別の聞き方を試す'];
-  const pair = [...new Set([...generated, ...(fallback ?? []), '少し待つ', 'もう少し詳しく尋ねる']
+  // Keep undisclosed character details and unverified directions out of learner choices.
+  const clues = [/青(?:い|色)?/, /緑(?:の|色)?/, /桜町/, /放課後/, /図書室/, /窓際/, /香ばし/];
+  const grounded = generated.filter(choice => !clues.some(clue => clue.test(choice) && !clue.test(heard))
+    && !/(?:改札.{0,6}(?:出て|右|左)|(?:一番|いちばん)(?:右|左|奥).{0,12}(?:あります|ですよ)|(?:あちら|そちら|右|左).{0,6}(?:乗り場です|乗り場ですよ))/.test(choice));
+  const pair = [...new Set([...grounded, ...(fallback ?? []), '少し待つ', 'もう少し詳しく尋ねる']
     .map(v => v.trim()).filter(v => v && v !== previous))].slice(0, 2);
   return (turn + seed) % 2 ? pair.reverse() : pair;
 }

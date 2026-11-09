@@ -15,3 +15,8 @@ test('missing or repeated choices are replaced without losing the valid choice',
   assert.ok(choices.includes('放課後のお話をもう少し聞く'));
   assert.ok(!choices.includes('少し待つ'));
 });
+
+test('a plausible misstep must not disclose a private clue or invent directions', () => {
+  assert.ok(!turnChoices('bookstore', '私に？', ['青い表紙ですか？','何かご用ですか？']).includes('青い表紙ですか？'));
+  assert.ok(!turnChoices('station', '青いバスです。', ['改札を出て右ですよ。','一緒に表示を見ますか？']).includes('改札を出て右ですよ。'));
+});

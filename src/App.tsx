@@ -190,7 +190,7 @@ function App() {
 
   const lastLine=session?.messages.at(-1);
   const choices=turnChoices(selected?.id ?? '', lastLine?.text, lastLine?.suggestions,
-    session?.messages.at(-2)?.text, session?.turnCount, session?.id.charCodeAt(0));
+    session?.messages.at(-2)?.text, session?.turnCount, session?.id.charCodeAt(0), session?.messages.map(m => m.text).join('\n'));
   const example=!lastLine ? '近くに寄ってもいいですか？' : draftHint(lastLine?.text ?? selected?.opening ?? '',choices,selected?.id);
   const actualMode = session?.mode || mode;
   return <div className="app-shell" data-screen={screen} data-motion={reducedMotion ? "reduced" : "full"}>
