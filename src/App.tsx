@@ -74,6 +74,29 @@ function App() {
     messageAttempt.current.clear();
   }, []);
   useEffect(() => {
+    // A controlling service worker can outlive the page but lose its keepalive request.
+    // Retry from the next document in this tab. Store only the opaque session ID.
+    const key = 'kindsignal.pending-release';
+    try {
+      const id = window.sessionStorage.getItem(key);
+      if (id) {
+        window.sessionStorage.removeItem(key);
+        void createSessionReleaser()(id);
+      }
+    } catch { /* Storage can be unavailable in restricted browsers. */ }
+    const leaveDocument = (event: PageTransitionEvent) => {
+      // A cached page can return with its conversation intact. A reload/close cannot.
+      if (event.persisted) return;
+      const id = cleanup.current.currentId();
+      if (id) {
+        try { window.sessionStorage.setItem(key, id); } catch { /* Still try the keepalive. */ }
+      }
+      cleanup.current.leave();
+    };
+    window.addEventListener('pagehide', leaveDocument);
+    return () => window.removeEventListener('pagehide', leaveDocument);
+  }, []);
+  useEffect(() => {
     const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
     const update = () => setReducedMotion(preference.matches);
     preference.addEventListener('change', update);

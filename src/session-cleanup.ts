@@ -10,6 +10,7 @@ export function createSessionCleanup() {
     if (previous) void previous.release(previous.id).catch(() => false);
   }
   return {
+    currentId: () => owned?.id,
     adopt(id: string, release: ReleaseSession) {
       if (owned?.id === id) return;
       leave();

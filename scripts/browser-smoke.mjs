@@ -22,6 +22,10 @@ async function fixture(viewport, character, run) {
   const app = createApp(demoProvider, { secureCookie: false });
   const server = app.listen(0, '127.0.0.1');
   await once(server, 'listening');
+  const received = [];
+  server.on('request', (request, response) => {
+    response.once('finish', () => received.push({ method: request.method, path: request.url, status: response.statusCode }));
+  });
   const origin = `http://127.0.0.1:${server.address().port}`;
   const context = await browser.newContext({ viewport, hasTouch: viewport.width <= 390, reducedMotion: 'reduce' });
   const page = await context.newPage();
@@ -35,7 +39,7 @@ async function fixture(viewport, character, run) {
     await assertions(page.locator('.practice-choice')).toHaveCount(0);
     await page.getByRole('button', { name: '場所を選ぶ', exact: false }).click();
     await assertions(page.locator('.practice-welcome')).toHaveCount(0);
-    await run(page, origin);
+    await run(page, origin, received);
     assert.deepEqual(errors, []);
     completed++;
   } catch (error) {
@@ -78,6 +82,63 @@ async function checkLayout(page) {
 }
 
 try {
+  for (const width of [1440, 390]) {
+    await fixture({ width, height: 844 }, 'yamamoto', async page => {
+      await chooseAndStart(page, scenarios[2], 'yamamoto');
+      const input = page.getByLabel('発言や行動を入力');
+      const sent = [];
+      await page.route('**/messages', route => { sent.push(route.request().postDataJSON()); return route.continue(); });
+      await input.fill('こんにちは。');
+      await input.dispatchEvent('keydown', { key: 'Enter', code: 'Enter', isComposing: true, keyCode: 229, bubbles: true });
+      assert.equal(sent.length, 0);
+      await assertions(input).toHaveValue('こんにちは。');
+      await input.press('Shift+Enter');
+      await input.pressSequentially('ゆっくりで大丈夫です。');
+      await assertions(input).toHaveValue('こんにちは。\nゆっくりで大丈夫です。');
+      await input.press('Enter');
+      await assertions(input).toHaveValue('');
+      assert.equal(sent.length, 1);
+      assert.equal(sent[0].text, 'こんにちは。\nゆっくりで大丈夫です。');
+    });
+    console.log(`PASS ${width}px Japanese-composition/keyboard-submit`);
+  }
+  await fixture({ width: 390, height: 844 }, 'sato', async page => {
+    await chooseAndStart(page, scenarios[1], 'sato');
+    const input = page.getByLabel('発言や行動を入力');
+    await input.fill('必要になったら教えてください。');
+    for (const viewport of [{ width: 844, height: 390 }, { width: 390, height: 430 }, { width: 390, height: 844 }]) {
+      await page.setViewportSize(viewport);
+      await input.scrollIntoViewIfNeeded();
+      await assertions(input).toBeInViewport();
+      await assertions(input).toHaveValue('必要になったら教えてください。');
+      assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
+    }
+    await input.press('Enter');
+    await assertions(page.locator('dialog[aria-labelledby="log-heading"]')).toContainText('1 / 20 往復');
+  });
+  console.log('PASS viewport-rotation/limited-height/draft-retention');
+  await fixture({ width: 390, height: 844 }, 'tanaka', async (page, origin, received) => {
+    const session = await chooseAndStart(page, scenarios[0], 'tanaka');
+    // Exercise a controlled PWA document, not just an unregistered first visit.
+    await page.evaluate(async () => {
+      await navigator.serviceWorker.ready;
+      if (!navigator.serviceWorker.controller) await new Promise(resolve =>
+        navigator.serviceWorker.addEventListener('controllerchange', resolve, {once:true}));
+    });
+    // A BFCache-style pagehide must preserve the current conversation.
+    await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pagehide', { persisted: true })));
+    await page.getByLabel('発言や行動を入力').fill('どんなお茶を探していますか。');
+    await page.getByRole('button', { name: '送信', exact: true }).click();
+    await assertions(page.locator('dialog[aria-labelledby="log-heading"]')).toContainText('1 / 20 往復');
+    assert.equal(received.filter(request => request.method === 'DELETE').length, 0);
+    await page.reload();
+    // Observe the server: the previous document cannot reliably receive an unload response.
+    await assertions.poll(() => received.find(request => request.path === '/api/sessions/' + session.id && request.method === 'DELETE')?.status).toBe(204);
+    await assertions(page.getByRole('button', { name: '場所を選ぶ', exact: false })).toBeVisible();
+    assert.equal(await page.evaluate(() => sessionStorage.getItem('kindsignal.pending-release')), null);
+    assert.equal((await page.request.post(origin + '/api/sessions/' + session.id + '/messages', { data: { text: 'こんにちは' } })).status(), 404);
+  });
+  console.log('PASS reload/releases-previous-session');
   for (const width of [1440, 390]) {
     await fixture({ width, height: 844 }, 'tanaka', async page => {
       await page.route('**/api/config', async route => {
