@@ -5,6 +5,8 @@ import { request as httpRequest } from 'node:http';
 import { createApp } from './app.js';
 import { createProvider, demoProvider, validateConversation, type Provider } from './provider.js';
 import { scenarios } from '../shared/scenarios.js';
+import { characterIds } from '../shared/scene-characters.js';
+import { directConversationAction } from '../shared/conversation-entry.js';
 import type { Message, Session, SessionResponse } from '../shared/types.js';
 
 type Request = <T = SessionResponse>(route: string, body?: unknown) => Promise<{ status: number; body: T }>;
@@ -98,6 +100,27 @@ test('session creation requires adult confirmation and a matching scenario/actio
     ];
     for (const body of invalid) assert.equal((await request('/api/sessions', body)).status, 400);
     await start(request);
+  });
+});
+
+test('omitting the initial action starts active conversations for all nine combinations', async () => {
+  await withApp(demoProvider, async request => {
+    for (const scenario of scenarios) for (const characterId of characterIds) {
+      const created = await request('/api/sessions', { scenarioId: scenario.id, characterId, adultConfirmed: true });
+      assert.equal(created.status, 201);
+      const { session } = created.body;
+      assert.equal(session.status, 'active');
+      assert.equal(session.characterId, characterId);
+      assert.equal(session.actionId, directConversationAction.id);
+      assert.equal(session.messages.length, 1);
+      const reply = await request(`/api/sessions/${session.id}/messages`, { text: 'こんにちは。' });
+      assert.equal(reply.status, 200);
+      assert.equal(reply.body.session.turnCount, 1);
+      assert.equal((await request(`/api/sessions/${session.id}/end`, { reason: 'finish' })).status, 200);
+      const result = await request(`/api/sessions/${session.id}/reflection`, {});
+      assert.equal(result.status, 200);
+      assert.equal(result.body.reflection?.action.label, directConversationAction.label);
+    }
   });
 });
 

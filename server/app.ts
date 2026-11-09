@@ -2,6 +2,7 @@ import { demoInputKind } from './demo-input-kind.js';
 import {openingFor, type InputKind} from '../shared/player-input.js';
 import { spokenLine } from '../shared/spoken-line.js';
 import { characterIds, characters, defaultCharacterId, withCharacter } from '../shared/scene-characters.js';
+import { directConversationAction, withConversationEntry } from '../shared/conversation-entry.js';
 import express from 'express';
 import { randomUUID, randomBytes } from 'node:crypto';
 import path from 'node:path';
@@ -15,7 +16,7 @@ import { validAudio, type SpeechSynthesizer } from './speech.js';
 // Only a server-side verifier may supply this stable subject, never a client header directly.
 export type Authenticate = (request: express.Request) => Promise<string | null>;
 type StoredSession = { owner: string | null; session: Session; reflection: Reflection | null; expires: number; busy: boolean; llmAttempts: number; speechBusy?: boolean; speechAttempts?: number; speech?: { index: number; audioContent: string }; messageRequests: Map<string, { kind: InputKind; text: string; committed: boolean }> };
-const startSchema = z.object({ scenarioId: z.string(), characterId: z.enum(characterIds).optional(), actionId: z.string(), adultConfirmed: z.literal(true) }).strict();
+const startSchema = z.object({ scenarioId: z.string(), characterId: z.enum(characterIds).optional(), actionId: z.string().default(directConversationAction.id), adultConfirmed: z.literal(true) }).strict();
 const messageSchema = z.object({ kind:z.enum(['speech','action','auto']).default('speech'), text: z.string().trim().min(1).max(500), requestId: z.string().min(1).max(128).regex(/^[A-Za-z0-9_-]+$/).optional() }).strict();
 const endSchema = z.object({ reason: z.enum(['finish', 'respect', 'emergency']) }).strict();
 const MAX_TURNS = 20;
@@ -88,10 +89,11 @@ export function createApp(provider: Provider, options: { ttlMs?: number; now?: (
   app.get('/api/scenarios', (_req, res) => { res.json({ scenarios }); });
   app.post('/api/sessions', (req, res) => {
     const parsed = startSchema.safeParse(req.body);
-    if (!parsed.success) { res.status(400).json({ error: '場面と最初の行動を選び、18歳以上であることを確認してください。' }); return; }
+    if (!parsed.success) { res.status(400).json({ error: '場面と、18歳以上であることを確認してください。' }); return; }
     const { scenarioId, characterId, actionId } = parsed.data;
     const baseScenario = scenarios.find(s => s.id === scenarioId);
-    const scenario = baseScenario && characterId ? withCharacter(baseScenario, characterId) : baseScenario;
+    const cast = baseScenario && characterId ? withCharacter(baseScenario, characterId) : baseScenario;
+    const scenario = cast && withConversationEntry(cast, actionId);
     if (!scenario || !openingFor(scenario, actionId)) { res.status(400).json({ error: 'シナリオと行動の組み合わせを確認してください。' }); return; }
     if (sessions.size >= (options.maxSessions ?? 100)) { res.status(503).json({ error: 'ただいま体験が混み合っています。時間をおいて再度お試しください。' }); return; }
     const session: Session = { id: randomUUID(), scenarioId, ...(characterId ? { characterId } : {}), actionId, status: 'active', turnCount: 0, maxTurns: MAX_TURNS, messages: [{ role: 'assistant', text: scenario.opening, ...(characterId ? { expression: characterId === 'yamamoto' ? 'confused' as const : characterId === 'sato' ? 'cautious' as const : 'neutral' as const } : {}) }], mode: provider.mode };
@@ -154,7 +156,7 @@ export function createApp(provider: Provider, options: { ttlMs?: number; now?: (
   };
   const reflect = async (stored: StoredSession) => {
     const baseScenario = scenarios.find(s => s.id === stored.session.scenarioId)!;
-    const scenario = stored.session.characterId ? withCharacter(baseScenario, stored.session.characterId) : baseScenario;
+    const scenario = withConversationEntry(stored.session.characterId ? withCharacter(baseScenario, stored.session.characterId) : baseScenario, stored.session.actionId);
     const action = openingFor(scenario, stored.session.actionId)!;
     const lastUser = stored.session.messages.filter(m => m.role === 'user').at(-1);
     const respect = stored.session.endReason === 'respect' && provider.mode === 'gemini';
@@ -192,14 +194,22 @@ export function createApp(provider: Provider, options: { ttlMs?: number; now?: (
     if (stored.speech?.index === index) { res.json({ audioContent: stored.speech.audioContent }); return; }
     if (stored.speechBusy || (stored.speechAttempts ?? 0) >= Math.min(MAX_TURNS + 3, 8 + stored.session.turnCount)) { res.status(429).json({ error: '音声を利用できません。文字で会話を続けてください。' }); return; }
     stored.speechBusy = true; stored.speechAttempts = (stored.speechAttempts ?? 0) + 1;
+    const stream = req.headers.accept === 'audio/x-kindsignal-pcm';
+    const emit = stream ? (bytes:Buffer) => {
+      if (!current() || sessions.get(stored.session.id)!==stored || now()>=stored.expires || res.destroyed) throw Error('Playback stopped');
+      if (!res.headersSent) res.type('audio/x-kindsignal-pcm');
+      res.write(bytes);
+    } : undefined;
     try {
-      const audioContent = await options.synthesizeSpeech(spokenLine(message.text), characters[stored.session.characterId ?? defaultCharacterId(stored.session.scenarioId)].voiceSceneId);
+      const audioContent = await options.synthesizeSpeech(spokenLine(message.text), characters[stored.session.characterId ?? defaultCharacterId(stored.session.scenarioId)].voiceSceneId,emit);
+      if (res.headersSent && (!current() || sessions.get(stored.session.id)!==stored || now()>=stored.expires)) {res.destroy();return;}
       if (!stillValid(stored, res)) return;
       if (!current()) { res.status(409).json({ error: '音声再生を終了しました。' }); return; }
       if (!validAudio(audioContent)) throw new Error('Invalid speech response');
       stored.speech = { index, audioContent }; // At most one bounded clip per session.
-      res.json({ audioContent });
+      if (res.headersSent) res.end(); else res.json({ audioContent });
     } catch {
+      if (res.headersSent) {res.destroy();return;}
       if (!stillValid(stored, res)) return;
       res.status(502).json({ error: '音声を取得できませんでした。文字で会話を続けられます。' });
     } finally { stored.speechBusy = false; }
@@ -225,7 +235,7 @@ export function createApp(provider: Provider, options: { ttlMs?: number; now?: (
     if (requestId) stored.messageRequests.set(requestId, request);
     try {
       const baseScenario = scenarios.find(s => s.id === stored.session.scenarioId)!;
-      const scenario = stored.session.characterId ? withCharacter(baseScenario, stored.session.characterId) : baseScenario;
+      const scenario = withConversationEntry(stored.session.characterId ? withCharacter(baseScenario, stored.session.characterId) : baseScenario, stored.session.actionId);
       const reply = await generate(() => provider.reply(scenario, structuredClone(stored.session), text, kind));
       if (!stillValid(stored, res)) return;
       // End requests are allowed during generation. Never append a late reply after a stop.
@@ -233,7 +243,7 @@ export function createApp(provider: Provider, options: { ttlMs?: number; now?: (
       const interpreted = kind === 'auto'
         ? (typeof reply !== 'string' && reply.inputKind || demoInputKind(text)) : kind;
       stored.session.messages.push({role:'user', text, ...(interpreted === 'speech' ? {} : {kind:interpreted})},
-        {role:'assistant', ...(typeof reply === 'string' ? {text:reply} : {text:reply.text,expression:reply.expression})});
+        {role:'assistant', ...(typeof reply === 'string' ? {text:reply} : {text:reply.text,expression:reply.expression,...(reply.suggestions ? {suggestions:[...new Set(reply.suggestions.map(v=>v.trim()).filter(v=>v && v.length<=48 && v!==text))].slice(0,2)} : {})})});
       stored.session.turnCount++;
       // Record the commit before any subsequent await (including demo reflection).
       request.committed = true;

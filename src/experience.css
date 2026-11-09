@@ -165,6 +165,7 @@ main h1:focus { outline: none; }
 .action-options { gap: 4px; }
 .action-options .action-option { background: transparent; border: 0; padding: 9px 0; min-height: 44px; }
 .action-options .action-option input { position: static; opacity: 1; width: 19px; height: 19px; flex: none; margin: 0; accent-color: #345743; }
+.reflection-grid { grid-template-columns: minmax(0, 1fr); }
 .reflection-grid .reflection-card h2 { margin: 0 0 12px; font-size: 1.25rem; }
 .reflection-grid .principle-box { border: none; margin: 12px 0; padding: 0; }
 .reflection-grid .principle-box > span { font-size: 1rem; color: #354d3c; font-weight: 600; }

@@ -89,3 +89,9 @@ button[data-tip]:focus-visible::after { visibility:visible; }
 @media (hover:hover) { button[data-tip]:hover::after { visibility:visible; } }
 .turn-suggestions { display:flex; gap:6px; flex-wrap:wrap; margin-top:.55rem; }
 .turn-suggestions button { min-height:44px; padding:.3rem .8rem; font:inherit; color:inherit; border:0; border-radius:var(--ks-action-radius); background:var(--ks-choice-fill); }
+
+/* Reserve the choice row so that neither the subtitle nor the input jumps. */
+.bookstore-interface:has(.line-skip) .turn-suggestions,
+.turn-suggestions[data-pending=true] { visibility:hidden; opacity:0; }
+.turn-suggestions { transition:opacity .16s ease-out; }
+@media(prefers-reduced-motion:reduce){ .turn-suggestions {transition:none;} }

@@ -1,7 +1,8 @@
+import {readPcmStream} from './speech-stream.js';
 import { GoogleAuth } from 'google-auth-library';
 import { positiveInteger } from './config.js';
 
-export type SpeechSynthesizer = (text: string, scenarioId?: string) => Promise<string>;
+export type SpeechSynthesizer = (text: string, scenarioId?: string, onPcm?:(bytes:Buffer)=>void) => Promise<string>;
 const standardEndpoint = 'https://texttospeech.googleapis.com/v1/text:synthesize';
 export const MAX_AUDIO_BASE64 = 1_600_000;
 export function validAudio(value: unknown): value is string {
@@ -28,7 +29,7 @@ export function createSpeechSynthesizer(env: NodeJS.ProcessEnv = process.env, de
   const fetcher = deps.fetch ?? fetch;
   const now = deps.now ?? (() => performance.now());
   let used = 0, running = 0, windowStart = now(), attempts = 0;
-  return async (text, scenarioId) => {
+  return async (text, scenarioId, onPcm) => {
     const character = characters.find(c => c.id === scenarioId);
     if (gemini && !character) throw new Error('Unknown character');
     if (!text.trim() || text.length > 1000 || Buffer.byteLength(text, 'utf8') > 5000) throw new Error('Speech text limit');
@@ -52,7 +53,8 @@ export function createSpeechSynthesizer(env: NodeJS.ProcessEnv = process.env, de
         const headers = await getHeaders();
         if (controller.signal.aborted || !new Headers(headers).get('authorization')) throw new Error('Speech authentication unavailable');
         phase = 'synthesis';
-        const response = await fetcher(endpoint, {
+        const streaming = gemini && !!onPcm;
+        const response = await fetcher(streaming ? endpoint.replace(':generateContent',':streamGenerateContent?alt=sse') : endpoint, {
           method: 'POST', redirect: 'error', signal: controller.signal,
           headers: { ...headers, 'Content-Type': 'application/json' },
           body: JSON.stringify(gemini ? {
@@ -62,6 +64,7 @@ export function createSpeechSynthesizer(env: NodeJS.ProcessEnv = process.env, de
         });
         if (!response.ok || !response.body) throw new Error('Speech unavailable');
         phase = 'audio-body';
+        if(streaming) return wav(await readPcmStream(response.body,onPcm!),24000);
         const reader = response.body.getReader();
         let bytes = 0;
         const chunks: Uint8Array[] = [];
@@ -83,11 +86,7 @@ export function createSpeechSynthesizer(env: NodeJS.ProcessEnv = process.env, de
           if (!/^audio\/(?:L16|pcm)\b/i.test(audio.mimeType ?? '') || bytes.length % 2) throw new Error('Unexpected audio format');
           const rate = Number(/rate=(\d+)/i.exec(audio.mimeType ?? '')?.[1] ?? 24000);
           if (rate !== 24000) throw new Error('Unexpected sample rate');
-          const header = Buffer.alloc(44);
-          header.write('RIFF'); header.writeUInt32LE(bytes.length+36,4); header.write('WAVEfmt ',8); header.writeUInt32LE(16,16);
-          header.writeUInt16LE(1,20); header.writeUInt16LE(1,22); header.writeUInt32LE(rate,24); header.writeUInt32LE(rate*2,28);
-          header.writeUInt16LE(2,32); header.writeUInt16LE(16,34); header.write('data',36); header.writeUInt32LE(bytes.length,40);
-          return Buffer.concat([header, bytes]).toString('base64');
+          return wav(bytes, rate);
         }
         if (!validAudio(data.audioContent)) throw new Error('Invalid speech response');
         return data.audioContent;
@@ -104,3 +103,11 @@ const characters = [
   { id: 'bookstore', voice: 'Charon', style: '72歳の日本人男性。低く丸みのある地声。落ち着いた普段の声。断る返事は短く自然に言い切る。名前を探す言いかけでは一拍待ち、思い出せる特徴に移るときは普段の速さに戻る。怒ったり声をしゃがれさせたりしない。' },
   { id: 'station', voice: 'Sulafat', style: '76歳の日本人女性。柔らかい落ち着いた地声。言いかけの「……」は無音の間として残し、次の言葉は息を継いでそっと置く。短い肯定は自然な一息で。文末を放送のように強調せず、声を震わせたり言葉を補ったりしない。' },
 ];
+
+function wav(bytes:Buffer, rate:number) {
+  const header = Buffer.alloc(44);
+  header.write('RIFF'); header.writeUInt32LE(bytes.length+36,4); header.write('WAVEfmt ',8); header.writeUInt32LE(16,16);
+  header.writeUInt16LE(1,20); header.writeUInt16LE(1,22); header.writeUInt32LE(rate,24); header.writeUInt32LE(rate*2,28);
+  header.writeUInt16LE(2,32); header.writeUInt16LE(16,34); header.write('data',36); header.writeUInt32LE(bytes.length,40);
+  return Buffer.concat([header, bytes]).toString('base64');
+}

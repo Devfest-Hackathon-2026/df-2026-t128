@@ -10,7 +10,7 @@ import { privateScenarios } from './private-scenarios.js';
 
 export interface Provider {
   mode: ProviderMode;
-  reply(scenario: Scenario, session: Session, text: string, kind?: InputKind): Promise<(CharacterLine & {inputKind?:InterpretedKind}) | string>;
+  reply(scenario: Scenario, session: Session, text: string, kind?: InputKind): Promise<(CharacterLine & {inputKind?:InterpretedKind;suggestions?:string[]}) | string>;
   reflect(scenario: Scenario, session: Session): Promise<Reflection['conversation']>;
 }
 
@@ -91,7 +91,7 @@ export function createProvider(env: NodeJS.ProcessEnv = process.env): Provider {
     mode: 'gemini',
     async reply(scenario, session, text, kind = 'speech') {
       const auto = kind === 'auto';
-      const system = buildCharacterInstruction(scenario, session) + (auto ? '\n今回の入力を文脈に沿って読み、入力全体の種類をinputKindに返す。speechは相手にかける言葉（例：少し待ってください）、actionは練習者の動作（例：少し待つ）、mixedは両方（例：案内板を指して「こちらですか？」と聞く）。引用符だけで決めない。動作は聞こえた台詞にせず、混在するときは動作と発言の両方を踏まえて人物として自然に応じる。' : '');
+      const system = buildCharacterInstruction(scenario, session) + (auto ? '\n今回の入力を文脈に沿って読み、入力全体の種類をinputKindに返す。suggestionsには今返すセリフを受けて練習者が次に選べる自然な発言・行動を異なる2案、各18字以内で。本人の意思を決めつけず、拒否に再説得を勧めず、直前の行動をそのまま繰り返さない。speechは相手にかける言葉（例：少し待ってください）、actionは練習者の動作（例：少し待つ）、mixedは両方（例：案内板を指して「こちらですか？」と聞く）。引用符だけで決めない。動作は聞こえた台詞にせず、混在するときは動作と発言の両方を踏まえて人物として自然に応じる。' : '');
       const history = session.messages.map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.kind === 'action' ? 'プレイヤーの行動：' + m.text : m.kind === 'mixed' ? 'プレイヤーの行動と発言：' + m.text : m.text }] }));
       // The initial assistant line is supplied as scenario context, followed by user/model turns.
       const contents = [
@@ -99,11 +99,11 @@ export function createProvider(env: NodeJS.ProcessEnv = process.env): Provider {
         ...history, { role: 'user', parts: [{ text: kind === 'action' ? 'プレイヤーの行動：' + text : text }] },
       ];
       const result = await generate(system + '\nJSONでtextに人物のセリフ、expressionにその人物自身がこの瞬間に見せる表情（neutral:通常、confused:戸惑い、cautious:慎重、relieved:安心）を返す。自然な普段の応答はneutral。練習者の良し悪しや病状を表情で評価しない。', contents, {
-        type: 'object', properties: { ...(auto ? {inputKind:{type:'string',enum:['speech','action','mixed']}} : {}), text: { type: 'string' }, expression: { type: 'string', enum: [...expressions] } },
-        required: auto ? ['text','expression','inputKind'] : ['text','expression'], additionalProperties: false,
+        type: 'object', properties: { ...(auto ? {inputKind:{type:'string',enum:['speech','action','mixed']}, suggestions:{type:'array',items:{type:'string'},minItems:2,maxItems:2}} : {}), text: { type: 'string' }, expression: { type: 'string', enum: [...expressions] } },
+        required: auto ? ['text','expression','inputKind','suggestions'] : ['text','expression'], additionalProperties: false,
       });
       const line = z.object({ text: z.string().trim().min(1).max(6000), expression: z.enum(expressions) });
-      return (auto ? line.extend({inputKind:z.enum(['speech','action','mixed'])}) : line).strict().parse(JSON.parse(result));
+      return (auto ? line.extend({inputKind:z.enum(['speech','action','mixed']),suggestions:z.array(z.string()).optional()}) : line).strict().parse(JSON.parse(result));
     },
     async reflect(scenario, session) {
       const dialogue = session.messages.map(m => ({ speaker: m.role === 'user' ? 'learner' : 'character', text: m.text, ...(m.kind ? {kind:m.kind} : {}) }));
