@@ -1,0 +1,11 @@
+{
+  "id": "/", "name": "KindSignal", "short_name": "KindSignal", "lang": "ja",
+  "description": "認知症のある人との会話を練習する",
+  "start_url": "/", "scope": "/", "display": "standalone",
+  "background_color": "#15291f", "theme_color": "#15291f",
+  "icons": [
+    {"src": "/icons/kindsignal-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "/icons/kindsignal-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "/icons/kindsignal-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}

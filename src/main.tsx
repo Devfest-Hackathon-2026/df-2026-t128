@@ -14,3 +14,11 @@ import './play-scene.css';
 import './practice-design.css';
 
 import './message-overlay.css';
+
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    void navigator.serviceWorker.register('/sw.js').catch(() => {
+      // Browsers that disallow service workers can still use the online app.
+    });
+  });
+}
