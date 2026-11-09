@@ -127,7 +127,7 @@ for (const stage of ['end', 'turn-limit'] as const) {
         const base = `http://127.0.0.1:${address.port}`;
         const id = (await (await start(base)).json()).session.id;
         if (stage === 'turn-limit') {
-          for (let n = 0; n < 4; n++) {
+          for (let n = 0; n < 19; n++) {
             assert.equal((await post(base, `/api/sessions/${id}/messages`, { text: '架空の発言' })).status, 200);
           }
         }

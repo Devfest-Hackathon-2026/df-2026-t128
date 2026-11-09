@@ -62,7 +62,7 @@ for (const place of scenarios) for (const id of characterIds) {
       assert.equal((await send(path + '/speech', { messageIndex: 0 })).status, 200);
       assert.deepEqual(voiceKeys, [characters[id].voiceSceneId]);
       assert.equal((await send(path + '/messages', { text: 'こんにちは', characterId: 'other' })).status, 400);
-      for (let i = 0; i < 5; i++) {
+      for (let i = 0; i < session.maxTurns; i++) {
         const body = { text: '本人の希望を確かめたいです。', requestId: `turn-${i}` };
         const reply = await send(path + '/messages', body);
         assert.equal(reply.status, 200);
@@ -70,6 +70,7 @@ for (const place of scenarios) for (const id of characterIds) {
         assert.equal(session.characterId, id);
         assert.equal(session.turnCount, i + 1);
         assert.ok(session.messages.at(-1)?.expression);
+        if (i === 11) assert.equal((await send(path + '/speech', {messageIndex: session.messages.length - 1})).status, 200);
         const retry = await send(path + '/messages', body);
         assert.equal(retry.status, 200);
         assert.deepEqual(retry.data.session, session);

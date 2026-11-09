@@ -15,14 +15,16 @@ export interface Provider {
 export const demoProvider: Provider = {
   mode: 'demo',
   async reply(scenario, session) {
-    const variant = variantDemoLine(scenario, session.turnCount);
+    const replies = privateScenarios[scenario.id].demoReplies;
+    const index = session.turnCount % replies.length;
+    const variant = variantDemoLine(scenario, index);
     if (variant) return variant;
     const frames: Record<string, CharacterLine['expression'][]> = {
       shop: ['neutral', 'relieved', 'confused', 'cautious', 'neutral'],
       bookstore: ['cautious', 'neutral', 'neutral', 'cautious', 'neutral'],
       station: ['confused', 'neutral', 'neutral', 'confused', 'relieved'],
     };
-    return { text: privateScenarios[scenario.id].demoReplies[session.turnCount], expression: frames[scenario.id][session.turnCount] };
+    return { text: replies[index], expression: frames[scenario.id][index] };
   },
   async reflect(_scenario, session) {
     return {

@@ -15,6 +15,7 @@ type StoredSession = { owner: string | null; session: Session; reflection: Refle
 const startSchema = z.object({ scenarioId: z.string(), characterId: z.enum(characterIds).optional(), actionId: z.string(), adultConfirmed: z.literal(true) }).strict();
 const messageSchema = z.object({ text: z.string().trim().min(1).max(500), requestId: z.string().min(1).max(128).regex(/^[A-Za-z0-9_-]+$/).optional() }).strict();
 const endSchema = z.object({ reason: z.enum(['finish', 'respect', 'emergency']) }).strict();
+const MAX_TURNS = 20;
 const TTL = 30 * 60 * 1000;
 
 export function createApp(provider: Provider, options: { ttlMs?: number; now?: () => number; maxSessions?: number; maxConcurrentGenerations?: number; secureCookie?: boolean; authenticate?: Authenticate; synthesizeSpeech?: SpeechSynthesizer } = {}) {
@@ -80,7 +81,7 @@ export function createApp(provider: Provider, options: { ttlMs?: number; now?: (
     next();
   });
   app.use(express.json({ limit: '4kb' }));
-  app.get('/api/config', (_req, res) => { res.json({ mode: provider.mode, maxTurns: 5, cloudSpeech: !!options.synthesizeSpeech }); });
+  app.get('/api/config', (_req, res) => { res.json({ mode: provider.mode, maxTurns: MAX_TURNS, cloudSpeech: !!options.synthesizeSpeech }); });
   app.get('/api/scenarios', (_req, res) => { res.json({ scenarios }); });
   app.post('/api/sessions', (req, res) => {
     const parsed = startSchema.safeParse(req.body);
@@ -90,7 +91,7 @@ export function createApp(provider: Provider, options: { ttlMs?: number; now?: (
     const scenario = baseScenario && characterId ? withCharacter(baseScenario, characterId) : baseScenario;
     if (!scenario || !scenario.actions.some(a => a.id === actionId)) { res.status(400).json({ error: 'シナリオと行動の組み合わせを確認してください。' }); return; }
     if (sessions.size >= (options.maxSessions ?? 100)) { res.status(503).json({ error: 'ただいま体験が混み合っています。時間をおいて再度お試しください。' }); return; }
-    const session: Session = { id: randomUUID(), scenarioId, ...(characterId ? { characterId } : {}), actionId, status: 'active', turnCount: 0, maxTurns: 5, messages: [{ role: 'assistant', text: scenario.opening, ...(characterId ? { expression: characterId === 'yamamoto' ? 'confused' as const : characterId === 'sato' ? 'cautious' as const : 'neutral' as const } : {}) }], mode: provider.mode };
+    const session: Session = { id: randomUUID(), scenarioId, ...(characterId ? { characterId } : {}), actionId, status: 'active', turnCount: 0, maxTurns: MAX_TURNS, messages: [{ role: 'assistant', text: scenario.opening, ...(characterId ? { expression: characterId === 'yamamoto' ? 'confused' as const : characterId === 'sato' ? 'cautious' as const : 'neutral' as const } : {}) }], mode: provider.mode };
     const selectedAction = scenario.actions.find(action => action.id === actionId)!;
     if (selectedAction.endOnSelection === 'respect') {
       session.status = 'completed';
@@ -138,11 +139,12 @@ export function createApp(provider: Provider, options: { ttlMs?: number; now?: (
   };
   const fixedOnly = (stored: StoredSession) =>
     provider.mode === 'gemini' && (stored.session.endReason === 'respect' || !stored.session.messages.some(m => m.role === 'user'));
-  // Five successful turns are enough to complete the exercise. Allow some failed
+  // Grow the session allowance with successful turns. Allow some failed
   // attempts, but keep the final attempt available for a completed reflection.
   const admitSession = (stored: StoredSession, res: express.Response, reflection = false) => {
     if (provider.mode !== 'gemini' || (reflection && fixedOnly(stored))) return true;
-    if (stored.llmAttempts >= (reflection ? 10 : 9)) {
+    const replyBudget = Math.max(9, stored.session.turnCount + 4);
+    if (stored.llmAttempts >= replyBudget + Number(reflection)) {
       res.status(429).json({ error: 'この会話のAI利用枠に達しました。会話を終了できます。' }); return false;
     }
     stored.llmAttempts++; return true;
@@ -175,7 +177,7 @@ export function createApp(provider: Provider, options: { ttlMs?: number; now?: (
   // Accept only an index into this owner's stored latest assistant reply. Never arbitrary text/SSML.
   app.post('/api/sessions/:id/speech', async (req, res) => {
     const stored = getStored(req.params.id, res); if (!stored) return;
-    const parsed = z.object({ messageIndex: z.number().int().min(0).max(10) }).strict().safeParse(req.body);
+    const parsed = z.object({ messageIndex: z.number().int().min(0).max(MAX_TURNS * 2) }).strict().safeParse(req.body);
     if (!parsed.success) { res.status(400).json({ error: '音声の対象を確認できません。' }); return; }
     if (!options.synthesizeSpeech) { res.status(503).json({ error: '音声は現在利用できません。文字で会話を続けられます。' }); return; }
     const index = parsed.data.messageIndex;
@@ -184,7 +186,7 @@ export function createApp(provider: Provider, options: { ttlMs?: number; now?: (
       index === stored.session.messages.length - 1 && message?.role === 'assistant';
     if (!current()) { res.status(409).json({ error: 'この返答の音声再生は終了しました。' }); return; }
     if (stored.speech?.index === index) { res.json({ audioContent: stored.speech.audioContent }); return; }
-    if (stored.speechBusy || (stored.speechAttempts ?? 0) >= 8) { res.status(429).json({ error: '音声を利用できません。文字で会話を続けてください。' }); return; }
+    if (stored.speechBusy || (stored.speechAttempts ?? 0) >= Math.min(MAX_TURNS + 3, 8 + stored.session.turnCount)) { res.status(429).json({ error: '音声を利用できません。文字で会話を続けてください。' }); return; }
     stored.speechBusy = true; stored.speechAttempts = (stored.speechAttempts ?? 0) + 1;
     try {
       const audioContent = await options.synthesizeSpeech(message.text, characters[stored.session.characterId ?? defaultCharacterId(stored.session.scenarioId)].voiceSceneId);

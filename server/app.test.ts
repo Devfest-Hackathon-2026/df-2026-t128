@@ -55,10 +55,10 @@ function deferred<T>() {
 }
 
 for (const scenario of scenarios) {
-  test(`demo: ${scenario.id} completes after five exchanges and rejects further messages`, async () => {
+  test(`demo: ${scenario.id} completes after twenty exchanges and rejects further messages`, async () => {
     await withApp(demoProvider, async request => {
       const id = await start(request, scenario);
-      for (let turn = 1; turn <= 5; turn++) {
+      for (let turn = 1; turn <= 20; turn++) {
         const response = await request(`/api/sessions/${id}/messages`, { text: `声かけの練習 ${turn}` });
         assert.equal(response.status, 200);
         assert.equal(response.body.session.turnCount, turn);
@@ -66,8 +66,8 @@ for (const scenario of scenarios) {
         assert.equal(response.body.session.messages.at(-2)?.role, 'user');
         assert.equal(response.body.session.messages.at(-1)?.role, 'assistant');
         assert.ok(response.body.session.messages.at(-1)?.text);
-        assert.equal(response.body.session.status, turn === 5 ? 'completed' : 'active');
-        if (turn === 5) {
+        assert.equal(response.body.session.status, turn === 20 ? 'completed' : 'active');
+        if (turn === 20) {
           assert.equal(response.body.session.endReason, 'turn-limit');
           assert.equal(response.body.reflection?.action.label, scenario.actions.find(action => !action.endOnSelection)!.label);
           assert.equal(response.body.reflection?.conversation.source, 'demo');
@@ -78,8 +78,8 @@ for (const scenario of scenarios) {
       }
       assert.equal((await request(`/api/sessions/${id}/messages`, { text: 'もう一度' })).status, 409);
       const completed = await request(`/api/sessions/${id}/end`, { reason: 'finish' });
-      assert.equal(completed.body.session.turnCount, 5);
-      assert.equal(completed.body.session.messages.length, 11);
+      assert.equal(completed.body.session.turnCount, 20);
+      assert.equal(completed.body.session.messages.length, 41);
       assert.equal(completed.body.session.endReason, 'turn-limit');
     });
   });
@@ -451,7 +451,7 @@ for (const ending of ['finish', 'turn-limit'] as const) {
     await withApp(demoProvider, async request => {
       const station = scenarios.find(scenario => scenario.id === 'bookstore')!;
       const id = await start(request, station);
-      for (let n = 0; n < (ending === 'turn-limit' ? 5 : 1); n++) {
+      for (let n = 0; n < (ending === 'turn-limit' ? 20 : 1); n++) {
         await request(`/api/sessions/${id}/messages`, { text: '分かりました。失礼します。' });
       }
       const ended = await request(`/api/sessions/${id}/end`, { reason: 'finish' });

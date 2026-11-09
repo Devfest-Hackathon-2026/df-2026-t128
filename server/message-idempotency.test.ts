@@ -76,16 +76,16 @@ test('provider failure releases key and legacy requests remain independent', asy
   });
 });
 
-test('fifth turn remains deduplicated when automatic reflection fails', async () => {
+test('final turn remains deduplicated when automatic reflection fails', async () => {
   let calls = 0;
   await withApp({ ...demoProvider, async reply() { calls++; return '返答'; }, async reflect() { throw Error('reflection failed'); } }, async base => {
     const id = await start(base);
-    for (let i = 1; i <= 5; i++) assert.equal((await message(base, id, `turn-${i}`)).status, 200);
-    const replay = await message(base, id, 'turn-5');
+    for (let i = 1; i <= 20; i++) assert.equal((await message(base, id, `turn-${i}`)).status, 200);
+    const replay = await message(base, id, 'turn-20');
     assert.equal(replay.status, 200);
     const body = await replay.json();
-    assert.equal(body.session.turnCount, 5); assert.equal(body.session.status, 'completed'); assert.equal(body.reflection, null);
-    assert.equal(calls, 5);
+    assert.equal(body.session.turnCount, 20); assert.equal(body.session.status, 'completed'); assert.equal(body.reflection, null);
+    assert.equal(calls, 20);
   });
 });
 
