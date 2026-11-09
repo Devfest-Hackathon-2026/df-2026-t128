@@ -1,7 +1,6 @@
 // Run after npm run build. No network unless --live is explicitly supplied.
 import { open } from 'node:fs/promises';
 import { createProvider } from '../dist-server/server/provider.js';
-import { serviceQuota } from '../dist-server/server/durable-quota.js';
 import { withGenerationLimits } from '../dist-server/server/generation-limits.js';
 import { collectSafetyEvaluation, plannedCalls, safetyCases } from '../dist-server/server/safety-evaluation.js';
 
@@ -20,7 +19,7 @@ try {
     if (process.env.AI_PROVIDER !== 'gemini') throw new Error('Set AI_PROVIDER=gemini explicitly');
     const model = process.env.GEMINI_MODEL?.trim();
     const backend = process.env.GEMINI_BACKEND ?? 'developer';
-    const provider = withGenerationLimits(createProvider(process.env), undefined, undefined, serviceQuota(process.env));
+    const provider = withGenerationLimits(createProvider(process.env));
     // Reserve a private new output file before spending any provider calls.
     const file = await open(args[1], 'wx', 0o600);
     const startedAt = new Date().toISOString();

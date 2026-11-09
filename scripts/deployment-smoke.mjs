@@ -136,3 +136,41 @@ try {
   console.log('Deployment smoke passed: Hosting config, ephemeral startup guard, anonymous cookie ownership, local built JS/CSS, 3 demo scenarios, reflection, idempotent deletion, post-deletion rejection. No cloud calls.');
 } finally { await stop(server); }
 
+// Startup/config checks only: no generation, credentials lookup or cloud calls.
+// Paid providers must not require a durable counter, and stale cumulative settings
+// must not reintroduce the removed gate when the next revision starts.
+for (const legacy of [false, true]) {
+  const configured = launch({
+    ALLOW_EPHEMERAL_SESSIONS: 'true', AI_PROVIDER: 'gemini', GEMINI_BACKEND: 'vertex',
+    GOOGLE_CLOUD_PROJECT: 'synthetic-project', GOOGLE_CLOUD_LOCATION: 'global',
+    GEMINI_MODEL: 'synthetic-model', TTS_PROVIDER: 'gemini',
+    ...(legacy ? { AI_MAX_SERVICE_ATTEMPTS: '1', AI_MAX_PROCESS_ATTEMPTS: '1',
+      TTS_MAX_TOTAL_CHARACTERS: '1', AI_QUOTA_STORE: 'sqlite',
+      AI_QUOTA_FILE: '/not-used/kindsignal.sqlite' } : {}),
+  });
+  try {
+    await waitUntilReady(configured);
+    const config = await (await request('/api/config')).json();
+    assert.equal(config.mode, 'gemini');
+    assert.equal(config.cloudSpeech, true);
+  } finally { await stop(configured); }
+}
+console.log('Paid-provider startup passed with absent and obsolete cumulative settings; no model or speech requests sent.');
+
+// Both operator dry-runs must work from a clean build after removed modules are gone.
+// Each script exits before constructing a provider or looking up cloud credentials.
+for (const script of ['safety-eval.mjs', 'vertex-one-reply.mjs']) {
+  const child = spawn(process.execPath, ['scripts/' + script, '--dry-run'], {
+    env: { PATH: process.env.PATH }, stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  const exited = once(child, 'exit');
+  let output = '';
+  child.stdout.on('data', chunk => { output += chunk; });
+  child.stderr.on('data', chunk => { output += chunk; });
+  const timer = setTimeout(() => child.kill('SIGKILL'), 5000);
+  let outcome;
+  try { outcome = await exited; } finally { clearTimeout(timer); }
+  assert.deepEqual(outcome, [0, null], script + ' dry-run failed: ' + output);
+  assert.match(output, script === 'safety-eval.mjs' ? /"status": "not-run"/ : /modelCalls: 0/);
+}
+console.log('Operator dry-runs passed from the clean build; no cloud calls.');

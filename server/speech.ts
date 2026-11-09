@@ -9,9 +9,9 @@ export function validAudio(value: unknown): value is string {
   return typeof value === 'string' && value.length > 0 && value.length <= MAX_AUDIO_BASE64 && value.length % 4 === 0 && /^[A-Za-z0-9+/]+={0,2}$/.test(value);
 }
 
-/** Off by default. Limits are per process, NOT a durable spending cap. */
+/** Off by default. Only short-window, concurrency and per-request limits apply. */
 export function createSpeechSynthesizer(env: NodeJS.ProcessEnv = process.env, deps: {
-  reserve?: () => void | Promise<void>; fetch?: typeof fetch; headers?: () => Promise<Record<string, string>>; now?: () => number;
+  fetch?: typeof fetch; headers?: () => Promise<Record<string, string>>; now?: () => number;
 } = {}): SpeechSynthesizer | undefined {
   if ((env.TTS_PROVIDER ?? 'off') === 'off') return undefined;
   const gemini = env.TTS_PROVIDER === 'gemini';
@@ -19,8 +19,6 @@ export function createSpeechSynthesizer(env: NodeJS.ProcessEnv = process.env, de
   if (gemini && !/^[a-z][a-z0-9-]{4,28}[a-z0-9]$/.test(project)) throw new Error('Invalid TTS project');
   const endpoint = gemini ? 'https://aiplatform.googleapis.com/v1/projects/' + project + '/locations/global/publishers/google/models/gemini-3.8-flash-tts:generateContent' : standardEndpoint;
   if (!gemini && env.TTS_PROVIDER !== 'google') throw new Error('TTS_PROVIDER must be off, google or gemini');
-  if (!env.TTS_MAX_TOTAL_CHARACTERS) throw new Error('Explicit TTS_MAX_TOTAL_CHARACTERS is required');
-  const limit = positiveInteger(env.TTS_MAX_TOTAL_CHARACTERS, 1, 'TTS_MAX_TOTAL_CHARACTERS', 100_000);
   const voice = env.TTS_VOICE ?? 'ja-JP-Standard-A';
   if (!/^ja-JP-Standard-[ABCD]$/.test(voice)) throw new Error('Only Japanese Standard voices are enabled');
   const timeout = positiveInteger(env.TTS_TIMEOUT_MS, 10000, 'TTS_TIMEOUT_MS', 20000);
@@ -28,28 +26,28 @@ export function createSpeechSynthesizer(env: NodeJS.ProcessEnv = process.env, de
   const getHeaders = deps.headers ?? (async () => Object.fromEntries((await auth.getRequestHeaders(endpoint)).entries()));
   const fetcher = deps.fetch ?? fetch;
   const now = deps.now ?? (() => performance.now());
-  let used = 0, running = 0, windowStart = now(), attempts = 0;
+  let running = 0, lastTime = -Infinity;
+  let recent: number[] = [];
   return async (text, scenarioId, onPcm) => {
     const character = characters.find(c => c.id === scenarioId);
     if (gemini && !character) throw new Error('Unknown character');
     if (!text.trim() || text.length > 1000 || Buffer.byteLength(text, 'utf8') > 5000) throw new Error('Speech text limit');
-    const count = [...text].length;
-    if (now() - windowStart >= 60_000) { windowStart = now(); attempts = 0; }
-    if (used + count > limit || running >= 2 || attempts >= 30) throw new Error('Speech capacity limit');
+    const time = now();
+    if (!Number.isFinite(time) || time < lastTime) throw new Error('Invalid speech clock');
+    lastTime = time;
+    recent = recent.filter(start => time - start < 60_000);
+    if (running >= 2 || recent.length >= 30) throw new Error('Speech capacity limit');
     // Reserve before awaiting credentials. Failures still consume the reservation.
-    used += count; attempts++; running++;
+    recent.push(time); running++;
     const controller = new AbortController();
     let timer: ReturnType<typeof setTimeout> | undefined;
     const deadline = new Promise<never>((_, reject) => {
       timer = setTimeout(() => { controller.abort(); reject(new Error('Speech deadline')); }, timeout);
     });
-    let phase = 'quota';
+    let phase = 'credentials';
     const started = now();
     try {
       return await Promise.race([deadline, (async () => {
-        await deps.reserve?.();
-        if (controller.signal.aborted) throw new Error('Speech deadline');
-        phase = 'credentials';
         const headers = await getHeaders();
         if (controller.signal.aborted || !new Headers(headers).get('authorization')) throw new Error('Speech authentication unavailable');
         phase = 'synthesis';

@@ -7,33 +7,33 @@ import type { Session } from '../shared/types.js';
 
 const scenario = scenarios[0];
 const session: Session = { id: 'test', scenarioId: scenario.id, actionId: scenario.actions[0].id, status: 'active', turnCount: 0, maxTurns: 5, messages: [], mode: 'gemini' };
-const limits = { maxAttempts: 3, maxAttemptsPerMinute: 2, maxConcurrent: 1 };
+const limits = { maxAttemptsPerMinute: 2, maxConcurrent: 1 };
 const fake = (reply: Provider['reply'] = async () => 'ok'): Provider => ({ ...demoProvider, mode: 'gemini', reply });
 const call = (p: Provider) => p.reply(scenario, session, 'test');
 
 test('defaults are bounded and malformed configuration fails closed', () => {
-  assert.deepEqual(loadGenerationLimits({}), { maxAttempts: 100, maxAttemptsPerMinute: 20, maxConcurrent: 4 });
-  for (const key of ['AI_MAX_PROCESS_ATTEMPTS', 'AI_MAX_ATTEMPTS_PER_MINUTE', 'MAX_CONCURRENT_GENERATIONS']) {
+  assert.deepEqual(loadGenerationLimits({}), { maxAttemptsPerMinute: 20, maxConcurrent: 4 });
+  for (const key of ['AI_MAX_ATTEMPTS_PER_MINUTE', 'MAX_CONCURRENT_GENERATIONS']) {
     for (const value of ['0', '-1', '1.5', 'Infinity', 'NaN', '10001', '', ' 2', '2x']) {
       assert.throws(() => loadGenerationLimits({ [key]: value }));
     }
   }
-  for (const value of [0, -1, 1.5, Infinity, NaN, 10001]) assert.throws(() => withGenerationLimits(fake(), { ...limits, maxAttempts: value }));
+  for (const value of [0, -1, 1.5, Infinity, NaN, 10001]) assert.throws(() => withGenerationLimits(fake(), { ...limits, maxAttemptsPerMinute: value }));
 });
 
-test('rolling window boundary permits new attempts but lifetime count never resets', async () => {
+test('rolling window recovers without any lifetime count limit', async () => {
   let time = 0, calls = 0;
   const p = withGenerationLimits(fake(async () => { calls++; return 'ok'; }), limits, () => time);
   await call(p); time = 100; await call(p);
   time = 59999; await assert.rejects(call(p), /limit/);
   time = 60000; await call(p);
-  time = 999999; await assert.rejects(call(p), /limit/);
-  assert.equal(calls, 3);
+  for (let i = 0; i < 150; i++) { time += 60000; await call(p); }
+  assert.equal(calls, 153);
 });
 
 test('failed and synchronously throwing operations consume attempts; rejected admissions do not', async () => {
   let calls = 0;
-  const p = withGenerationLimits(fake(() => { calls++; throw new Error('provider failed'); }), { ...limits, maxAttempts: 2 });
+  const p = withGenerationLimits(fake(() => { calls++; throw new Error('provider failed'); }), limits);
   await assert.rejects(call(p), /provider failed/);
   await assert.rejects(call(p), /provider failed/);
   await assert.rejects(call(p), /limit/);
@@ -61,18 +61,18 @@ test('no reset at fixed wall-clock minute boundaries; clocks fail closed', async
 });
 
 test('caller configuration mutations cannot increase limits, demo remains provider-free', async () => {
-  const config = { ...limits, maxAttempts: 1 };
+  const config = { ...limits, maxAttemptsPerMinute: 1 };
   const p = withGenerationLimits(fake(), config);
-  config.maxAttempts = 100;
+  config.maxAttemptsPerMinute = 100;
   await call(p); await assert.rejects(call(p), /limit/);
   assert.equal(withGenerationLimits(demoProvider, config), demoProvider);
 });
 
-test('exhaustion prevents provider calls while all stop reasons and release remain available', async () => {
+test('temporary throttling prevents provider calls while ending and release remain available', async () => {
   const { createApp } = await import('./app.js');
   const { once } = await import('node:events');
   let calls = 0;
-  const app = createApp(withGenerationLimits(fake(async () => { calls++; return 'ok'; }), { ...limits, maxAttempts: 1 }), { authenticate: async () => "fixture" });
+  const app = createApp(withGenerationLimits(fake(async () => { calls++; return 'ok'; }), { ...limits, maxAttemptsPerMinute: 1 }), { authenticate: async () => "fixture" });
   const server = app.listen(0, '127.0.0.1');
   try {
     await once(server, 'listening');
@@ -85,8 +85,8 @@ test('exhaustion prevents provider calls while all stop reasons and release rema
       if (reason === 'finish') assert.equal((await post(`/api/sessions/${id}/messages`, { text: 'hello' })).status, 200);
       const blocked = await post(`/api/sessions/${id}/messages`, { text: 'blocked' });
       assert.equal(blocked.status, 429);
-      assert.equal(blocked.headers.get('retry-after'), null);
-      assert.match((await blocked.json()).error, /利用枠/);
+      assert.ok(Number(blocked.headers.get('retry-after')) > 0);
+      assert.match((await blocked.json()).error, /集中/);
       const ended = await post(`/api/sessions/${id}/end`, { reason });
       assert.equal(ended.status, 200);
       assert.equal((await ended.json()).session.turnCount, reason === 'finish' ? 1 : 0);
@@ -113,4 +113,8 @@ test('rolling limit reports the actual wait without spending another provider at
   time = 60000;
   await call(p);
   assert.equal(calls, 2);
+});
+
+test('obsolete cumulative environment caps no longer stop startup or generation', () => {
+  assert.deepEqual(loadGenerationLimits({ AI_MAX_PROCESS_ATTEMPTS: '1', AI_MAX_SERVICE_ATTEMPTS: '1', AI_QUOTA_STORE: 'firestore' }), loadGenerationLimits({}));
 });
