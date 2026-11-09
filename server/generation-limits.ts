@@ -59,7 +59,7 @@ export function withGenerationLimits(
   };
   return {
     mode: provider.mode,
-    reply: (scenario, session, text) => run(() => provider.reply(scenario, session, text)),
+    reply: (scenario, session, text, kind) => run(() => provider.reply(scenario, session, text, kind)),
     reflect: (scenario, session) => run(() => provider.reflect(scenario, session)),
   };
 }

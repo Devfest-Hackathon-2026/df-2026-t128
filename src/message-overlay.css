@@ -87,3 +87,8 @@ button[data-tip]::after {
 .message-pill button[data-tip]::after { top:auto; bottom:calc(100% + 3px); }
 button[data-tip]:focus-visible::after { visibility:visible; }
 @media (hover:hover) { button[data-tip]:hover::after { visibility:visible; } }
+.turn-suggestions,.input-kind { display:flex; gap:6px; flex-wrap:wrap; margin-top:.55rem; }
+.turn-suggestions button,.input-kind button { min-height:44px; padding:.3rem .8rem; font:inherit; color:inherit; border:0; border-radius:var(--ks-action-radius); background:var(--ks-choice-fill); }
+.input-kind { gap:2px; }
+.input-kind button { background:transparent; }
+.input-kind button[aria-pressed=true] { background:var(--ks-paper); color:var(--ks-ink); }

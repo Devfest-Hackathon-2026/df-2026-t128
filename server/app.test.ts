@@ -477,3 +477,18 @@ test('respect after a user turn in shop/sato never generates further advice', as
     assert.match(r.body.reflection!.conversation.suggestion,/会話を終えて/);
   });
 });
+
+test('a free opening can be an action; retrying as speech is not the same turn',async()=>{
+  await withApp(demoProvider,async request=>{
+    const created=await request('/api/sessions',{scenarioId:'station',characterId:'yamamoto',actionId:'free-input',adultConfirmed:true});
+    assert.equal(created.status,201);
+    const path='/api/sessions/'+created.body.session.id;
+    const body={kind:'action',text:'少し待つ',requestId:'wait'};
+    const sent=await request(path+'/messages',body);
+    assert.equal(sent.body.session.messages[1].kind,'action');
+    assert.equal(sent.body.session.messages[2].text,'（案内板に目を向ける）');
+    assert.equal((await request(path+'/messages',body)).body.session.turnCount,1);
+    assert.equal((await request(path+'/messages',{...body,kind:'speech'})).status,409);
+    assert.equal((await request(path+'/end',{reason:'finish'})).status,200);
+  });
+});

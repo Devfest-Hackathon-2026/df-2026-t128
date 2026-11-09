@@ -9,13 +9,19 @@ const profiles: Record<CharacterId, string> = {
 };
 const intentions: Record<string, string> = {
   shop: 'いつもの香ばしい緑茶（緑の袋）を探す。購入する商品は本人が選ぶ。未確認の在庫や棚の位置、商品を見つけたことを捏造しない。',
-  bookstore: '前に読んで気に入った青い表紙の本を探す。題名や著者はすぐ出ないが読後の印象を話せる。本人が本と探す方法を選ぶ。未確認の在庫を断定しない。',
+  bookstore: '前に読んで気に入った青い表紙の本を探す。本人が本と探す方法を選ぶ。未確認の在庫を断定しない。',
   station: '桜町の自宅近くへ帰るため、駅前の青いバス乗り場を探す。正確な乗り場は未確認。本人が望めば駅員と確認できる。帰宅できたことやバスに乗れたことを捏造しない。',
 };
 
 export function characterFacts(scenario: Scenario): string {
-  if (!scenario.characterId || scenario.characterId === defaultCharacterId(scenario.id)) return privateScenarios[scenario.id].facts;
-  return `${profiles[scenario.characterId]} 今いる場所は${scenario.location}。${intentions[scenario.id]} 病名や未設定の生活歴を追加せず、目的と人物像を会話中に変えない。`;
+  const id = scenario.characterId ?? defaultCharacterId(scenario.id);
+  const agency:Record<CharacterId,string> = {
+    tanaka:'新しい案内は抜けやすいが、見慣れた特徴なら自分で選べる。手伝いを喜ぶことと選択を任せることは別。待ってもらったら品物や表示を自分で見比べてよい。',
+    sato:'名前の想起に時間がかかるが、手伝いを望むかの判断は明確。自分のペースを好み、一歩離れてもらったら自分の作業に戻れる。何度も勧められても根負けしない。',
+    yamamoto:'言葉で複数の情報をやり取りする負担が大きい。静かに待たれたときは、声を出さず視線や手の動きだけで応じることもある。選択を急かされたときに無言でも同意にはしない。どれを望むかは本人が決める。',
+  };
+  if (id === defaultCharacterId(scenario.id)) return privateScenarios[scenario.id].facts + ' ' + agency[id];
+  return `${profiles[id]} ${agency[id]} 今いる場所は${scenario.location}。${intentions[scenario.id]} 病名や未設定の生活歴を追加せず、目的と人物像を会話中に変えない。`;
 }
 
 const variantReplies: Record<string, Partial<Record<CharacterId, string[]>>> = {

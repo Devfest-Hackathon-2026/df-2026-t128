@@ -1,3 +1,4 @@
+import {openingFor, type InputKind} from '../shared/player-input.js';
 import { spokenLine } from '../shared/spoken-line.js';
 import { characterIds, characters, defaultCharacterId, withCharacter } from '../shared/scene-characters.js';
 import express from 'express';
@@ -12,9 +13,9 @@ import { validAudio, type SpeechSynthesizer } from './speech.js';
 
 // Only a server-side verifier may supply this stable subject, never a client header directly.
 export type Authenticate = (request: express.Request) => Promise<string | null>;
-type StoredSession = { owner: string | null; session: Session; reflection: Reflection | null; expires: number; busy: boolean; llmAttempts: number; speechBusy?: boolean; speechAttempts?: number; speech?: { index: number; audioContent: string }; messageRequests: Map<string, { text: string; committed: boolean }> };
+type StoredSession = { owner: string | null; session: Session; reflection: Reflection | null; expires: number; busy: boolean; llmAttempts: number; speechBusy?: boolean; speechAttempts?: number; speech?: { index: number; audioContent: string }; messageRequests: Map<string, { kind: InputKind; text: string; committed: boolean }> };
 const startSchema = z.object({ scenarioId: z.string(), characterId: z.enum(characterIds).optional(), actionId: z.string(), adultConfirmed: z.literal(true) }).strict();
-const messageSchema = z.object({ text: z.string().trim().min(1).max(500), requestId: z.string().min(1).max(128).regex(/^[A-Za-z0-9_-]+$/).optional() }).strict();
+const messageSchema = z.object({ kind:z.enum(['speech','action']).default('speech'), text: z.string().trim().min(1).max(500), requestId: z.string().min(1).max(128).regex(/^[A-Za-z0-9_-]+$/).optional() }).strict();
 const endSchema = z.object({ reason: z.enum(['finish', 'respect', 'emergency']) }).strict();
 const MAX_TURNS = 20;
 const TTL = 30 * 60 * 1000;
@@ -90,10 +91,10 @@ export function createApp(provider: Provider, options: { ttlMs?: number; now?: (
     const { scenarioId, characterId, actionId } = parsed.data;
     const baseScenario = scenarios.find(s => s.id === scenarioId);
     const scenario = baseScenario && characterId ? withCharacter(baseScenario, characterId) : baseScenario;
-    if (!scenario || !scenario.actions.some(a => a.id === actionId)) { res.status(400).json({ error: 'シナリオと行動の組み合わせを確認してください。' }); return; }
+    if (!scenario || !openingFor(scenario, actionId)) { res.status(400).json({ error: 'シナリオと行動の組み合わせを確認してください。' }); return; }
     if (sessions.size >= (options.maxSessions ?? 100)) { res.status(503).json({ error: 'ただいま体験が混み合っています。時間をおいて再度お試しください。' }); return; }
     const session: Session = { id: randomUUID(), scenarioId, ...(characterId ? { characterId } : {}), actionId, status: 'active', turnCount: 0, maxTurns: MAX_TURNS, messages: [{ role: 'assistant', text: scenario.opening, ...(characterId ? { expression: characterId === 'yamamoto' ? 'confused' as const : characterId === 'sato' ? 'cautious' as const : 'neutral' as const } : {}) }], mode: provider.mode };
-    const selectedAction = scenario.actions.find(action => action.id === actionId)!;
+    const selectedAction = openingFor(scenario, actionId)!;
     if (selectedAction.endOnSelection === 'respect') {
       session.status = 'completed';
       session.endReason = 'respect';
@@ -153,7 +154,7 @@ export function createApp(provider: Provider, options: { ttlMs?: number; now?: (
   const reflect = async (stored: StoredSession) => {
     const baseScenario = scenarios.find(s => s.id === stored.session.scenarioId)!;
     const scenario = stored.session.characterId ? withCharacter(baseScenario, stored.session.characterId) : baseScenario;
-    const action = scenario.actions.find(a => a.id === stored.session.actionId)!;
+    const action = openingFor(scenario, stored.session.actionId)!;
     const lastUser = stored.session.messages.filter(m => m.role === 'user').at(-1);
     const respect = stored.session.endReason === 'respect' && provider.mode === 'gemini';
     const conversation = respect && lastUser ? {
@@ -207,10 +208,10 @@ export function createApp(provider: Provider, options: { ttlMs?: number; now?: (
     const stored = getStored(req.params.id, res); if (!stored) return;
     const parsed = messageSchema.safeParse(req.body);
     if (!parsed.success) { res.status(400).json({ error: '声かけは1〜500文字で入力してください。' }); return; }
-    const { text, requestId } = parsed.data;
+    const { text, requestId, kind } = parsed.data;
     const previous = requestId ? stored.messageRequests.get(requestId) : undefined;
     if (previous) {
-      if (previous.text !== text) { res.status(409).json({ error: '送信内容が前回と異なります。入力を確認して、もう一度送ってください。' }); return; }
+      if (previous.text !== text || previous.kind !== kind) { res.status(409).json({ error: '送信内容が前回と異なります。入力を確認して、もう一度送ってください。' }); return; }
       // Return current state, not an old snapshot that could resurrect a stopped session.
       if (previous.committed) { send(stored, res); return; }
       res.set('Retry-After', '1').status(409).json({ error: '先ほどの声かけに返事をしています。少し待ってから、同じ内容でもう一度お試しください。' }); return;
@@ -219,16 +220,16 @@ export function createApp(provider: Provider, options: { ttlMs?: number; now?: (
     if (stored.busy) { res.status(409).json({ error: '返答を待っています。しばらくお待ちください。' }); return; }
     if (!capacity(res) || !admitSession(stored, res)) return;
     stored.busy = true;
-    const request = { text, committed: false };
+    const request = { text, kind, committed: false };
     if (requestId) stored.messageRequests.set(requestId, request);
     try {
       const baseScenario = scenarios.find(s => s.id === stored.session.scenarioId)!;
       const scenario = stored.session.characterId ? withCharacter(baseScenario, stored.session.characterId) : baseScenario;
-      const reply = await generate(() => provider.reply(scenario, structuredClone(stored.session), parsed.data.text));
+      const reply = await generate(() => provider.reply(scenario, structuredClone(stored.session), text, kind));
       if (!stillValid(stored, res)) return;
       // End requests are allowed during generation. Never append a late reply after a stop.
       if (stored.session.status !== 'active') { send(stored, res); return; }
-      stored.session.messages.push({ role: 'user', text: parsed.data.text }, { role: 'assistant', ...(typeof reply === 'string' ? { text: reply } : reply) });
+      stored.session.messages.push({ role: 'user', text, ...(kind === 'action' ? {kind} : {}) }, { role: 'assistant', ...(typeof reply === 'string' ? { text: reply } : reply) });
       stored.session.turnCount++;
       // Record the commit before any subsequent await (including demo reflection).
       request.committed = true;

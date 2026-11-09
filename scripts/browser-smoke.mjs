@@ -76,6 +76,22 @@ async function checkLayout(page) {
 }
 
 try {
+  await fixture({width:390,height:844},'yamamoto',async page=>{
+    await page.locator('#start-station').click();
+    await page.getByRole('button',{name:'行動',exact:true}).click();
+    await page.getByLabel('行動を入力').fill('案内板の隣で少し待つ');
+    await page.getByRole('button',{name:'行動する',exact:true}).click();
+    await page.getByRole('button',{name:'少し待つ',exact:true}).click();
+    await assertions(page.getByLabel('行動を入力')).toHaveValue('少し待つ');
+    await page.getByRole('button',{name:'行動する',exact:true}).click();
+    await assertions(page.locator('.character-line')).toHaveText('（案内板に目を向ける）');
+    await page.getByLabel('返事を入力').fill('ここにいますね。');
+    await page.getByRole('button',{name:'声をかける',exact:true}).click();
+    await assertions(page.locator('.story-history strong').filter({hasText:'あなたの行動'})).toHaveCount(2);
+    await page.getByRole('button',{name:'会話を終える',exact:true}).click();
+    await page.getByRole('button',{name:'振り返る',exact:true}).click();
+    await assertions(page.locator('.reflection-grid')).toBeVisible();
+  });
   for (const viewport of [{ width: 1440, height: 1000 }, { width: 390, height: 844 }]) {
     for (const scene of scenarios) for (const person of characterIds) {
       await fixture(viewport, person, async page => {

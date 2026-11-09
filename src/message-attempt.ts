@@ -1,23 +1,24 @@
+import type {InputKind} from '../shared/player-input';
 /** One unresolved logical send per mounted experience. Never persisted to storage. */
 export function createMessageAttempt(newId: () => string = () => crypto.randomUUID()) {
-  let attempt: { sessionId: string; text: string; requestId: string } | undefined;
+  let attempt: { sessionId: string; kind: InputKind; text: string; requestId: string } | undefined;
   let inFlight = false;
   let epoch = 0;
   return {
     get sending() { return inFlight; },
     clear() { epoch++; attempt = undefined; inFlight = false; },
-    async send<T>(sessionId: string, draft: string, send: (body: { text: string; requestId: string }) => Promise<T>): Promise<T> {
+    async send<T>(sessionId: string, draft: string, send: (body: { text: string; requestId: string; kind?: InputKind }) => Promise<T>, kind: InputKind = 'speech'): Promise<T> {
       if (inFlight) throw new Error('返答を待っています。しばらくお待ちください。');
       const text = draft.trim();
       if (!text) throw new Error('声かけを入力してください。');
-      if (!attempt || attempt.sessionId !== sessionId || attempt.text !== text) {
-        attempt = { sessionId, text, requestId: newId() };
+      if (!attempt || attempt.sessionId !== sessionId || attempt.text !== text || attempt.kind !== kind) {
+        attempt = { sessionId, kind, text, requestId: newId() };
       }
       const current = attempt;
       const started = epoch;
       inFlight = true;
       try {
-        const result = await send({ text: current.text, requestId: current.requestId });
+        const result = await send({ text: current.text, requestId: current.requestId, ...(kind === 'action' ? {kind} : {}) });
         if (epoch === started && attempt === current) attempt = undefined;
         return result;
       } finally {
