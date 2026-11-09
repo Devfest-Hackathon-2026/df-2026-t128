@@ -1,3 +1,4 @@
+import { demoInputKind } from './demo-input-kind.js';
 import {openingFor, type InputKind} from '../shared/player-input.js';
 import { spokenLine } from '../shared/spoken-line.js';
 import { characterIds, characters, defaultCharacterId, withCharacter } from '../shared/scene-characters.js';
@@ -15,7 +16,7 @@ import { validAudio, type SpeechSynthesizer } from './speech.js';
 export type Authenticate = (request: express.Request) => Promise<string | null>;
 type StoredSession = { owner: string | null; session: Session; reflection: Reflection | null; expires: number; busy: boolean; llmAttempts: number; speechBusy?: boolean; speechAttempts?: number; speech?: { index: number; audioContent: string }; messageRequests: Map<string, { kind: InputKind; text: string; committed: boolean }> };
 const startSchema = z.object({ scenarioId: z.string(), characterId: z.enum(characterIds).optional(), actionId: z.string(), adultConfirmed: z.literal(true) }).strict();
-const messageSchema = z.object({ kind:z.enum(['speech','action']).default('speech'), text: z.string().trim().min(1).max(500), requestId: z.string().min(1).max(128).regex(/^[A-Za-z0-9_-]+$/).optional() }).strict();
+const messageSchema = z.object({ kind:z.enum(['speech','action','auto']).default('speech'), text: z.string().trim().min(1).max(500), requestId: z.string().min(1).max(128).regex(/^[A-Za-z0-9_-]+$/).optional() }).strict();
 const endSchema = z.object({ reason: z.enum(['finish', 'respect', 'emergency']) }).strict();
 const MAX_TURNS = 20;
 const TTL = 30 * 60 * 1000;
@@ -229,7 +230,10 @@ export function createApp(provider: Provider, options: { ttlMs?: number; now?: (
       if (!stillValid(stored, res)) return;
       // End requests are allowed during generation. Never append a late reply after a stop.
       if (stored.session.status !== 'active') { send(stored, res); return; }
-      stored.session.messages.push({ role: 'user', text, ...(kind === 'action' ? {kind} : {}) }, { role: 'assistant', ...(typeof reply === 'string' ? { text: reply } : reply) });
+      const interpreted = kind === 'auto'
+        ? (typeof reply !== 'string' && reply.inputKind || demoInputKind(text)) : kind;
+      stored.session.messages.push({role:'user', text, ...(interpreted === 'speech' ? {} : {kind:interpreted})},
+        {role:'assistant', ...(typeof reply === 'string' ? {text:reply} : {text:reply.text,expression:reply.expression})});
       stored.session.turnCount++;
       // Record the commit before any subsequent await (including demo reflection).
       request.committed = true;

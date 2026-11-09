@@ -27,6 +27,6 @@ export function ConversationExperience({scenario, session, reducedMotion, childr
 
 export function ConversationHistory({ session, scenario }: {session: Session; scenario: Scenario}) {
   return <div className="conversation-record">
-    <div className="story-history">{session.messages.map((message, i) => <p key={i}><strong>{message.role === 'user' ? (message.kind==='action'?'あなたの行動':'あなた') : scenario.character}</strong>{message.text}</p>)}</div>
+    <div className="story-history">{session.messages.map((message, i) => <p key={i}><strong>{message.role === 'user' ? (message.kind==='action'?'あなたの行動':message.kind==='mixed'?'あなたの行動と発言':'あなた') : scenario.character}</strong>{message.text}</p>)}</div>
   </div>;
 }

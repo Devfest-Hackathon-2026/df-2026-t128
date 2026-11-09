@@ -67,7 +67,7 @@ async function checkLayout(page) {
   await assertReplyBefore(page, '.composer');
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'No horizontal page overflow');
   await assertions(page.locator('.bookstore-person[data-visible="true"]')).toHaveCount(1);
-  for (const name of ['声をかける', '会話を終える']) {
+  for (const name of ['送信', '会話を終える']) {
     const control = page.getByRole('button', { name, exact: true });
     await control.scrollIntoViewIfNeeded();
     const box = await control.boundingBox();
@@ -78,15 +78,15 @@ async function checkLayout(page) {
 try {
   await fixture({width:390,height:844},'yamamoto',async page=>{
     await page.locator('#start-station').click();
-    await page.getByRole('button',{name:'行動',exact:true}).click();
-    await page.getByLabel('行動を入力').fill('案内板の隣で少し待つ');
-    await page.getByRole('button',{name:'行動する',exact:true}).click();
+    await assertions(page.getByRole('group',{name:'入力の種類'})).toHaveCount(0);
+    await page.getByLabel('発言や行動を入力').fill('案内板の隣で少し待つ');
+    await page.getByRole('button',{name:'送信',exact:true}).click();
     await page.getByRole('button',{name:'少し待つ',exact:true}).click();
-    await assertions(page.getByLabel('行動を入力')).toHaveValue('少し待つ');
-    await page.getByRole('button',{name:'行動する',exact:true}).click();
+    await assertions(page.getByLabel('発言や行動を入力')).toHaveValue('少し待つ');
+    await page.getByRole('button',{name:'送信',exact:true}).click();
     await assertions(page.locator('.character-line')).toHaveText('（案内板に目を向ける）');
-    await page.getByLabel('返事を入力').fill('ここにいますね。');
-    await page.getByRole('button',{name:'声をかける',exact:true}).click();
+    await page.getByLabel('発言や行動を入力').fill('ここにいますね。');
+    await page.getByRole('button',{name:'送信',exact:true}).click();
     await assertions(page.locator('.story-history strong').filter({hasText:'あなたの行動'})).toHaveCount(2);
     await page.getByRole('button',{name:'会話を終える',exact:true}).click();
     await page.getByRole('button',{name:'振り返る',exact:true}).click();
@@ -104,8 +104,8 @@ try {
         await assertions(page.locator('.scene-image-status')).toBeEmpty();
         await checkLayout(page);
         const before = await page.locator('.bookstore-person[data-visible="true"]').boundingBox();
-        await page.getByLabel('返事を入力').fill('何かお手伝いできることはありますか。');
-        await page.getByRole('button', { name: '声をかける', exact: true }).click();
+        await page.getByLabel('発言や行動を入力').fill('何かお手伝いできることはありますか。');
+        await page.getByRole('button', { name: '送信', exact: true }).click();
         await assertions(page.locator('dialog[aria-labelledby="log-heading"]')).toContainText('1 / 20 往復');
         await assertions(page.locator('.scene-image-status')).toBeEmpty();
         const after = await page.locator('.bookstore-person[data-visible="true"]').boundingBox();
@@ -145,19 +145,19 @@ try {
     });
     const session = await chooseAndStart(page, scenarios[0], 'tanaka');
     await assertions(page.locator('.scene-image-status')).toBeEmpty();
-    await page.getByLabel('返事を入力').fill('こんにちは。');
-    await page.getByRole('button', { name: '声をかける', exact: true }).click();
+    await page.getByLabel('発言や行動を入力').fill('こんにちは。');
+    await page.getByRole('button', { name: '送信', exact: true }).click();
     await assertions(page.getByRole('button', { name: '画像を再読み込み', exact: true })).toBeVisible();
     await assertions(page.locator('.bookstore-person[data-visible="true"]')).toHaveAttribute('src', /neutral\.webp$/);
-    await page.getByLabel('返事を入力').fill('消えない下書き');
+    await page.getByLabel('発言や行動を入力').fill('消えない下書き');
     allowImage = true;
     await page.getByRole('button', { name: '画像を再読み込み', exact: true }).click();
     await assertions(page.locator('.scene-image-status')).toBeEmpty();
-    await assertions(page.getByLabel('返事を入力')).toHaveValue('消えない下書き');
+    await assertions(page.getByLabel('発言や行動を入力')).toHaveValue('消えない下書き');
     await assertions(page.locator('.bookstore-person[data-visible="true"]')).toHaveAttribute('src', /relieved\.webp$/);
     for (const expression of ['confused', 'cautious', 'neutral']) {
-      await page.getByLabel('返事を入力').fill('ご希望を聞かせてください。');
-      await page.getByRole('button', { name: '声をかける', exact: true }).click();
+      await page.getByLabel('発言や行動を入力').fill('ご希望を聞かせてください。');
+      await page.getByRole('button', { name: '送信', exact: true }).click();
       await assertions(page.locator('.bookstore-person[data-visible="true"]')).toHaveAttribute('src', new RegExp(expression + '\\.webp$'));
     }
     await assertions(page.locator('.bookstore-stage')).toHaveAttribute('data-reduced', 'true');
@@ -197,9 +197,9 @@ try {
           } else if (failure === 'offline') await route.abort('connectionfailed');
           else await route.fulfill({ status: 503, json: { error: 'ただいま混み合っています。少し待ってから再度お試しください。' } });
         });
-        const input = page.getByLabel('返事を入力');
+        const input = page.getByLabel('発言や行動を入力');
         await input.fill('いつものお茶について教えてください。');
-        await page.getByRole('button', { name: '声をかける', exact: true }).click();
+        await page.getByRole('button', { name: '送信', exact: true }).click();
         try {
           await assertions(page.locator('.composer')).toHaveAttribute('aria-busy', 'true');
           await assertions(input).toBeDisabled();
@@ -236,7 +236,7 @@ try {
     }
     await fixture(viewport, 'sato', async page => {
       await chooseAndStart(page, scenarios[1], 'sato');
-      const input = page.getByLabel('返事を入力');
+      const input = page.getByLabel('発言や行動を入力');
       await input.fill('終了時にも残る下書き');
       let attempts = 0;
       await page.route('**/end', async route => {

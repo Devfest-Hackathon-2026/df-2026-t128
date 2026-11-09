@@ -10,7 +10,7 @@ export interface Scenario {
 export const expressions = ['neutral', 'confused', 'cautious', 'relieved'] as const;
 export type Expression = typeof expressions[number];
 export interface CharacterLine { text: string; expression: Expression }
-export interface Message { kind?: 'action'; expression?: Expression; role: 'user' | 'assistant'; text: string }
+export interface Message { kind?: 'action' | 'mixed'; expression?: Expression; role: 'user' | 'assistant'; text: string }
 export type SessionStatus = 'active' | 'completed' | 'interrupted';
 export interface Session {
   characterId?: CharacterId;

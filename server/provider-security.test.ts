@@ -145,3 +145,18 @@ test('one generation supplies both the spoken line and a known portrait; invalid
   await assert.rejects(provider.reply(scenario, session(), 'もう一度'));
   assert.equal(count, 2);
 });
+
+test('automatic interpretation and character reply use one generation and preserve mixed history', async t => {
+  let calls=0;
+  t.mock.method(globalThis,'fetch',async (_url:unknown,init:RequestInit)=>{
+    calls++;
+    const body=JSON.parse(init.body as string);
+    assert.ok(body.generationConfig.responseJsonSchema.required.includes('inputKind'));
+    assert.equal(body.contents.at(-1).parts[0].text,'少し待ってください');
+    assert.match(body.contents[1].parts[0].text,/行動と発言/);
+    return response(JSON.stringify({inputKind:'speech',text:'はい。',expression:'neutral'}));
+  });
+  const result=await createProvider(env).reply(scenario,session([{role:'user',kind:'mixed',text:'棚を指して「これですか？」と聞く'}]),'少し待ってください','auto');
+  assert.deepEqual(result,{inputKind:'speech',text:'はい。',expression:'neutral'});
+  assert.equal(calls,1);
+});

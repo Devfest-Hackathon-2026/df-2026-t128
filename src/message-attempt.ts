@@ -18,7 +18,7 @@ export function createMessageAttempt(newId: () => string = () => crypto.randomUU
       const started = epoch;
       inFlight = true;
       try {
-        const result = await send({ text: current.text, requestId: current.requestId, ...(kind === 'action' ? {kind} : {}) });
+        const result = await send({ text: current.text, requestId: current.requestId, ...(kind !== 'speech' ? {kind} : {}) });
         if (epoch === started && attempt === current) attempt = undefined;
         return result;
       } finally {
