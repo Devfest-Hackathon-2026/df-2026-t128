@@ -79,6 +79,32 @@ async function checkLayout(page) {
 
 try {
   for (const width of [1440, 390]) {
+    await fixture({ width, height: 844 }, 'tanaka', async page => {
+      await page.route('**/api/config', async route => {
+        const response = await route.fetch();
+        await route.fulfill({ response, json: { ...await response.json(), cloudSpeech: true } });
+      });
+      await page.route('**/voices/*.mp3', route => route.fulfill({ status: 503, body: 'synthetic unavailable' }));
+      await page.route('**/api/sessions/*/speech', route => route.fulfill({ status: 503, body: 'synthetic unavailable' }));
+      // Reinitialize after installing the synthetic config; no real cloud service is enabled.
+      await page.reload();
+      await page.getByRole('button', { name: '場所を選ぶ', exact: false }).click();
+      await chooseAndStart(page, scenarios[0], 'tanaka');
+      // The current entry is narration, not a spoken character line. Fail the first real reply's audio.
+      await page.getByLabel('発言や行動を入力').fill('どんなお茶を探していますか。');
+      await page.getByRole('button', { name: '送信', exact: true }).click();
+      await assertions(page.locator('dialog[aria-labelledby="log-heading"]')).toContainText('1 / 20 往復');
+      await assertions(page.getByRole('button', { name: '端末の声で聞く', exact: true })).toBeVisible();
+      await assertions(page.getByRole('status').filter({ hasText: '音声を再生できませんでした' })).toHaveCount(1);
+      await page.getByLabel('発言や行動を入力').fill('ゆっくり選んでください。');
+      await page.getByRole('button', { name: '送信', exact: true }).click();
+      await assertions(page.locator('dialog[aria-labelledby="log-heading"]')).toContainText('2 / 20 往復');
+      await assertions(page.getByLabel('発言や行動を入力')).toBeEnabled();
+      await assertions(page.locator('.character-line')).not.toBeEmpty();
+    });
+    console.log(`PASS ${width}px cloud-voice-failure/text-conversation`);
+  }
+  for (const width of [1440, 390]) {
     await fixture({ width, height: 844 }, 'sato', async page => {
       await chooseAndStart(page, scenarios[1], 'sato');
       const input=page.getByLabel('発言や行動を入力');
