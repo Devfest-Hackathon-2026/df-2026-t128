@@ -13,7 +13,7 @@ const names = [
 ];
 const report = [];
 for (const [place, person] of names) {
-  for (const name of [`${place}-bg`, ...['neutral', 'confused', 'cautious', 'relieved'].map(expression => `${person}-${expression}`)]) {
+  for (const name of [`${place}-bg`, ...['neutral', 'confused', 'cautious', 'relieved'].map(expression => `${person}-${expression}-v2`)]) {
     const source = `${place}/${name}.png`;
     const target = `${place}/${name}.webp`;
     const png = await readFile(new URL(source, root));

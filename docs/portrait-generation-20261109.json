@@ -1,0 +1,94 @@
+{
+  "method": "built-in GPT Image",
+  "transparentBackground": true,
+  "canvas": {
+    "width": 1086,
+    "height": 1448
+  },
+  "images": [
+    {
+      "id": "sato-neutral",
+      "output": "public/bookstore/sato-neutral-v2.png",
+      "reference": "public/bookstore/sato-neutral.png",
+      "generatedFile": "exec-4685975e-3b80-46bd-8497-806e43ad5dc3.png",
+      "prompt": "Use case: identity-preserve. Asset: ONE photorealistic transparent PNG character cutout for KindSignal, fictional Japanese man Sato, age 72. Use the supplied portrait as identity and wardrobe reference. Regenerate a clean, natural, photographic neutral portrait of this same man with the same silver hair, rectangular glasses, taupe cable-knit cardigan over a muted check shirt, beige trousers and plain brown crossbody bag. IMPORTANT remove the book completely: both empty hands rest naturally in front of his lower waist, relaxed standing posture. This portrait will be composited in a Japanese supermarket, bookstore and train station, so use everyday clothing and no location-specific props. Neutral attentive expression, closed mouth, self-possessed, no exaggerated smile, confusion, frailty or medical stereotypes. Look toward conversation partner just beside camera, head nearly level. Knee-up centered 3:4 portrait, entire head, shoulders, hands and upper legs visible, generous clear margins, desired 1200x1600. Soft diffuse neutral-warm indoor light from upper left with gentle fill, restrained contrast and natural skin texture so he fits all three indoor backgrounds. Preserve recognizable identity while cleaning all colored red/yellow edge fringing. GENUINE alpha-transparent background, no floor, room, opaque backdrop, checkerboard texture, text, logo or watermark. This is the fixed master pose for four facial expressions."
+    },
+    {
+      "id": "tanaka-neutral",
+      "output": "public/supermarket/tanaka-neutral-v2.png",
+      "reference": "public/supermarket/tanaka-neutral.png",
+      "generatedFile": "exec-8e65be37-667b-41ca-946a-09b23d379ca4.png",
+      "prompt": "Use case: identity-preserve. ONE transparent photorealistic PNG cutout for KindSignal. Regenerate the same fictional Japanese woman Tanaka age 78 from the reference, preserving her recognizable face, short softly waved silver hair, dusty rose cardigan, ivory blouse, dark taupe trousers, small plain brown crossbody bag. Warm approachable yet self-possessed NEUTRAL expression, closed mouth, subtle natural aging, not a smile pose. Hands loosely together at lower waist, near-frontal relaxed standing pose with nearly level head looking just beside camera toward conversation partner. NO products, groceries, books, tickets or location-specific props. Everyday outfit suitable equally for a Japanese supermarket, bookstore or station. Knee-up centered 3:4 framing, whole head shoulders hands upper legs, generous clear margin, desired1200x1600. Soft diffuse neutral-warm indoor light from upper left and gentle fill, realistic skin and textile texture, no dramatic studio glow or hard rim light. This is the MASTER for four matching facial expressions. Clean hair and clothing edges without red/yellow colored fringe. GENUINE transparent alpha background, no scene floor checkerboard text watermark. Do not exaggerate illness, weakness or medical stereotypes."
+    },
+    {
+      "id": "yamamoto-neutral",
+      "output": "public/station/yamamoto-neutral-v2.png",
+      "reference": "public/station/yamamoto-neutral.png",
+      "generatedFile": "exec-418856b0-67ca-4224-8888-ff1c61f54481.png",
+      "prompt": "Use case: identity-preserve. ONE transparent photorealistic PNG cutout for KindSignal. Regenerate the same fictional Japanese woman Yamamoto age76 from the reference, recognizable face, straight gray bob, navy lightweight jacket over pale blue blouse, beige trousers and plain light canvas shoulder bag. Neutral attentive closed-mouth expression with quiet uncertainty but dignity, NOT visibly frightened or distressed. Keep one hand resting naturally on bag strap, other relaxed slightly open at lower waist, near frontal relaxed standing pose, nearly level head looking just beside camera toward conversation partner. Everyday outfit suitable for a Japanese supermarket bookstore or station, no location-specific props. Knee-up centered3:4 frame, whole head shoulders hands upper legs, generous clear margins, desired1200x1600. Soft diffuse neutral-warm indoor light from upper left with gentle fill, natural skin fabric hair textures, no dramatic contrast or glowing rim. MASTER for four matching facial expressions. Clean edges without colored red/yellow fringe. GENUINE alpha-transparent background no room floor checkerboard text logo watermark. Do not exaggerate illness frailty or medical stereotypes."
+    },
+    {
+      "id": "sato-confused",
+      "output": "public/bookstore/sato-confused-v2.png",
+      "reference": "public/bookstore/sato-neutral-v2.png",
+      "generatedFile": "exec-facb7361-4a92-4782-82ea-7077a5fa2cce.png",
+      "prompt": "Use case: identity-preserve. Edit the supplied NEW Sato master portrait, fictional Japanese man age72. Change ONLY facial expression to slightly confused: gently knit brows, thoughtful questioning eyes and very slightly parted lips. Keep EXACT same face identity, gray hair, glasses, taupe cardigan, check shirt, beige trousers, brown shoulder bag, empty clasped hands, head angle, body silhouette, pose, scale, framing, canvas size and diffuse upper-left lighting. No book or new props. Portrait must align pixel-for-pixel in the same knee-up centered3:4 frame for a natural crossfade. Preserve genuine alpha-transparent background; clean natural photographic edges without colored fringe. No background floor checkerboard text watermark. Subtle respectful everyday expression, no exaggerated medical traits."
+    },
+    {
+      "id": "sato-cautious",
+      "output": "public/bookstore/sato-cautious-v2.png",
+      "reference": "public/bookstore/sato-neutral-v2.png",
+      "generatedFile": "exec-e8f1e451-db5c-413a-8cf7-fe32cfc34a74.png",
+      "prompt": "Use case: identity-preserve. Edit the supplied NEW Sato master portrait, fictional Japanese man age72. Change ONLY facial expression to cautious/hesitant: subtly tightened lips and reserved attentive eyes, no anger or fear. Keep EXACT same face identity, gray hair, glasses, taupe cardigan, check shirt, beige trousers, brown shoulder bag, empty clasped hands, head angle, body silhouette, pose, scale, framing, canvas size and diffuse upper-left lighting. No book or new props. Portrait must align pixel-for-pixel in the same knee-up centered3:4 frame for a natural crossfade. Preserve genuine alpha-transparent background; clean natural photographic edges without colored fringe. No background floor checkerboard text watermark. Subtle respectful everyday expression, no exaggerated medical traits."
+    },
+    {
+      "id": "sato-relieved",
+      "output": "public/bookstore/sato-relieved-v2.png",
+      "reference": "public/bookstore/sato-neutral-v2.png",
+      "generatedFile": "exec-0f9f3a91-439b-4d09-a4eb-319af57c9e6a.png",
+      "prompt": "Use case: identity-preserve. Edit the supplied NEW Sato master portrait, fictional Japanese man age72. Change ONLY facial expression to relieved: relaxed brows, softened eyes and a small closed-mouth smile, no broad grin. Keep EXACT same face identity, gray hair, glasses, taupe cardigan, check shirt, beige trousers, brown shoulder bag, empty clasped hands, head angle, body silhouette, pose, scale, framing, canvas size and diffuse upper-left lighting. No book or new props. Portrait must align pixel-for-pixel in the same knee-up centered3:4 frame for a natural crossfade. Preserve genuine alpha-transparent background; clean natural photographic edges without colored fringe. No background floor checkerboard text watermark. Subtle respectful everyday expression, no exaggerated medical traits."
+    },
+    {
+      "id": "tanaka-confused",
+      "output": "public/supermarket/tanaka-confused-v2.png",
+      "reference": "public/supermarket/tanaka-neutral-v2.png",
+      "generatedFile": "exec-fe0c54b0-dadd-440a-8dc0-b14dc4017aa9.png",
+      "prompt": "Use case: identity-preserve. ONE PNG cutout facial-expression variant of the supplied Tanaka, fictional Japanese woman age78 with softly waved short silver hair, dusty-rose cardigan, ivory blouse, taupe trousers and small brown crossbody bag, hands clasped at lower waist. Change ONLY the facial expression to mildly confused: subtly knit brows, slightly questioning eyes, gently parted lips; dignified and thoughtful, not distressed. Preserve EXACT same face identity, hair, age, clothes, body proportions, pose and hands, head angle, lighting, image dimensions, centered knee-up 3:4 canvas, margins and scale. Must align naturally with master in a crossfade. No props added, suitable equally for supermarket bookstore or station. Genuine clean alpha-transparent background and natural photographic edges without red/yellow residue. No background floor checkerboard text watermark or exaggerated medical traits."
+    },
+    {
+      "id": "tanaka-cautious",
+      "output": "public/supermarket/tanaka-cautious-v2.png",
+      "reference": "public/supermarket/tanaka-neutral-v2.png",
+      "generatedFile": "exec-303f6c8e-f115-4470-bf78-60a222680792.png",
+      "prompt": "Use case: identity-preserve. ONE PNG cutout facial-expression variant of the supplied Tanaka, fictional Japanese woman age78 with softly waved short silver hair, dusty-rose cardigan, ivory blouse, taupe trousers and small brown crossbody bag, hands clasped at lower waist. Change ONLY the facial expression to cautious/hesitant: reserved attentive gaze and gently pressed lips; not angry or frightened. Preserve EXACT same face identity, hair, age, clothes, body proportions, pose and hands, head angle, lighting, image dimensions, centered knee-up 3:4 canvas, margins and scale. Must align naturally with master in a crossfade. No props added, suitable equally for supermarket bookstore or station. Genuine clean alpha-transparent background and natural photographic edges without red/yellow residue. No background floor checkerboard text watermark or exaggerated medical traits."
+    },
+    {
+      "id": "tanaka-relieved",
+      "output": "public/supermarket/tanaka-relieved-v2.png",
+      "reference": "public/supermarket/tanaka-neutral-v2.png",
+      "generatedFile": "exec-d857fa42-134d-47c0-bbf5-e281ea4f3b31.png",
+      "prompt": "Use case: identity-preserve. ONE PNG cutout facial-expression variant of the supplied Tanaka, fictional Japanese woman age78 with softly waved short silver hair, dusty-rose cardigan, ivory blouse, taupe trousers and small brown crossbody bag, hands clasped at lower waist. Change ONLY the facial expression to relieved: relaxed eyebrows, softened eyes and a very small warm closed-mouth smile; not a broad grin. Preserve EXACT same face identity, hair, age, clothes, body proportions, pose and hands, head angle, lighting, image dimensions, centered knee-up 3:4 canvas, margins and scale. Must align naturally with master in a crossfade. No props added, suitable equally for supermarket bookstore or station. Genuine clean alpha-transparent background and natural photographic edges without red/yellow residue. No background floor checkerboard text watermark or exaggerated medical traits."
+    },
+    {
+      "id": "yamamoto-confused",
+      "output": "public/station/yamamoto-confused-v2.png",
+      "reference": "public/station/yamamoto-neutral-v2.png",
+      "generatedFile": "exec-f2828a34-9a2c-424f-bd0e-cfa96465dad9.png",
+      "prompt": "Use case: identity-preserve. ONE PNG cutout facial-expression variant of the supplied Yamamoto, fictional Japanese woman age76 with straight gray bob, navy light jacket, pale blue blouse, beige trousers and light canvas shoulder bag, one hand on strap and other slightly open at waist. Change ONLY the facial expression to mildly confused: subtly knit brows, slightly questioning eyes, gently parted lips; dignified and thoughtful, not distressed. Preserve EXACT same face identity, hair, age, clothes, body proportions, pose and hands, head angle, lighting, image dimensions, centered knee-up 3:4 canvas, margins and scale. Must align naturally with master in a crossfade. No props added, suitable equally for supermarket bookstore or station. Genuine clean alpha-transparent background and natural photographic edges without red/yellow residue. No background floor checkerboard text watermark or exaggerated medical traits."
+    },
+    {
+      "id": "yamamoto-cautious",
+      "output": "public/station/yamamoto-cautious-v2.png",
+      "reference": "public/station/yamamoto-neutral-v2.png",
+      "generatedFile": "exec-4ffa5ec0-7ccc-4109-886d-d45fcd1b3333.png",
+      "prompt": "Use case: identity-preserve. ONE PNG cutout facial-expression variant of the supplied Yamamoto, fictional Japanese woman age76 with straight gray bob, navy light jacket, pale blue blouse, beige trousers and light canvas shoulder bag, one hand on strap and other slightly open at waist. Change ONLY the facial expression to cautious/hesitant: reserved attentive gaze and gently pressed lips; not angry or frightened. Preserve EXACT same face identity, hair, age, clothes, body proportions, pose and hands, head angle, lighting, image dimensions, centered knee-up 3:4 canvas, margins and scale. Must align naturally with master in a crossfade. No props added, suitable equally for supermarket bookstore or station. Genuine clean alpha-transparent background and natural photographic edges without red/yellow residue. No background floor checkerboard text watermark or exaggerated medical traits."
+    },
+    {
+      "id": "yamamoto-relieved",
+      "output": "public/station/yamamoto-relieved-v2.png",
+      "reference": "public/station/yamamoto-neutral-v2.png",
+      "generatedFile": "exec-ec54aa2e-922f-42f8-a007-eada9494d936.png",
+      "prompt": "Use case: identity-preserve. ONE PNG cutout facial-expression variant of the supplied Yamamoto, fictional Japanese woman age76 with straight gray bob, navy light jacket, pale blue blouse, beige trousers and light canvas shoulder bag, one hand on strap and other slightly open at waist. Change ONLY the facial expression to relieved: relaxed eyebrows, softened eyes and a very small warm closed-mouth smile; not a broad grin. Preserve EXACT same face identity, hair, age, clothes, body proportions, pose and hands, head angle, lighting, image dimensions, centered knee-up 3:4 canvas, margins and scale. Must align naturally with master in a crossfade. No props added, suitable equally for supermarket bookstore or station. Genuine clean alpha-transparent background and natural photographic edges without red/yellow residue. No background floor checkerboard text watermark or exaggerated medical traits."
+    }
+  ]
+}

@@ -1,3 +1,20 @@
+# 田中さんの共通人物素材v2（2026-11-09）
+
+ユーザー承認のもと組み込みGPT Imageで4表情を再生成しました。スーパー・書店・駅で共通利用する普段の外出着と立ち姿です。背景は従来のままです。現在の表示は下表のWebPを使用します。
+
+| 表情 | 生成PNG原本 | 配信用WebP |
+| --- | --- | --- |
+| neutral | tanaka-neutral-v2.png | tanaka-neutral-v2.webp |
+| confused | tanaka-confused-v2.png | tanaka-confused-v2.webp |
+| cautious | tanaka-cautious-v2.png | tanaka-cautious-v2.webp |
+| relieved | tanaka-relieved-v2.png | tanaka-relieved-v2.webp |
+
+4枚とも1086×1448のRGBA PNGで、背景の透明画素を確認しました。PNGからWebPへの変換は可逆圧縮で、寸法・アルファ・可視RGBの一致を確認しています。元のv1素材は同じフォルダーに保存しています。
+
+実際のプロンプトと参照画像の対応は `docs/portrait-generation-20261109.json`、作業内容と検証範囲は `docs/portrait-refresh.md` を参照してください。
+
+## 以前の素材記録（以下は旧版）
+
 # スーパーの2.5D画像素材（生成・配置済み）
 
 このフォルダーは新規素材専用です。書店の佐藤さんの画像を流用・上書きしません。

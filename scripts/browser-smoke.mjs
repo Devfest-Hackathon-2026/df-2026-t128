@@ -163,6 +163,7 @@ try {
         await assertions(page.locator('.conversation-mode-note')).toContainText('用意した返事');
         await assertions(page.locator('.scene-image-status')).toBeEmpty();
         await checkLayout(page);
+        await page.screenshot({ path: `output/browser-smoke/portrait-${scene.id}-${person}-${viewport.width}.png`, fullPage: true });
         const before = await page.locator('.bookstore-person[data-visible="true"]').boundingBox();
         await page.getByLabel('発言や行動を入力').fill('何かお手伝いできることはありますか。');
         await page.getByRole('button', { name: '送信', exact: true }).click();
@@ -193,7 +194,7 @@ try {
   }
   await fixture({ width: 390, height: 844 }, 'tanaka', async page => {
     let allowImage = false;
-    await page.route('**/tanaka-relieved.webp', route => allowImage ? route.continue() : route.abort());
+    await page.route('**/tanaka-relieved-v2.webp', route => allowImage ? route.continue() : route.abort());
     // Fixture expression sequence tests the display contract, not AI response quality.
     const expressions = ['relieved', 'confused', 'cautious', 'neutral'];
     await page.route('**/messages', async route => {
@@ -207,17 +208,17 @@ try {
     await page.getByLabel('発言や行動を入力').fill('こんにちは。');
     await page.getByRole('button', { name: '送信', exact: true }).click();
     await assertions(page.getByRole('button', { name: '画像を再読み込み', exact: true })).toBeVisible();
-    await assertions(page.locator('.bookstore-person[data-visible="true"]')).toHaveAttribute('src', /neutral\.webp$/);
+    await assertions(page.locator('.bookstore-person[data-visible="true"]')).toHaveAttribute('src', /neutral-v2\.webp$/);
     await page.getByLabel('発言や行動を入力').fill('消えない下書き');
     allowImage = true;
     await page.getByRole('button', { name: '画像を再読み込み', exact: true }).click();
     await assertions(page.locator('.scene-image-status')).toBeEmpty();
     await assertions(page.getByLabel('発言や行動を入力')).toHaveValue('消えない下書き');
-    await assertions(page.locator('.bookstore-person[data-visible="true"]')).toHaveAttribute('src', /relieved\.webp$/);
+    await assertions(page.locator('.bookstore-person[data-visible="true"]')).toHaveAttribute('src', /relieved-v2\.webp$/);
     for (const expression of ['confused', 'cautious', 'neutral']) {
       await page.getByLabel('発言や行動を入力').fill('ご希望を聞かせてください。');
       await page.getByRole('button', { name: '送信', exact: true }).click();
-      await assertions(page.locator('.bookstore-person[data-visible="true"]')).toHaveAttribute('src', new RegExp(expression + '\\.webp$'));
+      await assertions(page.locator('.bookstore-person[data-visible="true"]')).toHaveAttribute('src', new RegExp(expression + '-v2\\.webp$'));
     }
     await assertions(page.locator('.bookstore-stage')).toHaveAttribute('data-reduced', 'true');
     assert.equal(await page.locator('.bookstore-person[data-visible="true"]').evaluate(element => getComputedStyle(element).transitionDuration), '0s');
@@ -316,6 +317,32 @@ try {
       assert.equal(attempts, 2);
     });
     console.log(`PASS ${viewport.width}px recovery/end`);
+  }
+  for (const width of [1440, 390]) for (const person of characterIds) {
+    await fixture({ width, height: 844 }, person, async page => {
+      const frames = ['neutral', 'confused', 'cautious', 'relieved'];
+      await page.route('**/messages', async route => {
+        const response = await route.fetch();
+        const data = await response.json();
+        data.session.messages.at(-1).expression = frames.shift();
+        await route.fulfill({ response, json: data });
+      });
+      await chooseAndStart(page, scenarios[2], person);
+      await assertions(page.locator('.scene-image-status')).toBeEmpty();
+      const before = await page.locator('.bookstore-person[data-visible="true"]').boundingBox();
+      for (const frame of ['neutral', 'confused', 'cautious', 'relieved']) {
+        await page.getByLabel('発言や行動を入力').fill('ご希望を教えてください。');
+        await page.getByRole('button', { name: '送信', exact: true }).click();
+        const portrait = page.locator('.bookstore-person[data-visible="true"]');
+        await assertions(portrait).toHaveAttribute('src', new RegExp(`${person}-${frame}-v2\\.webp$`));
+        const after = await portrait.boundingBox();
+        assert.equal(after.width, before.width);
+        assert.equal(after.height, before.height);
+        assert.equal(after.x, before.x);
+        await assertions(page.locator('.scene-image-status')).toBeEmpty();
+      }
+    });
+    console.log(`PASS ${width}px portrait-expressions/${person}`);
   }
   console.log(`Browser smoke passed: ${completed} cases, demo only. Screenshots: output/browser-smoke/`);
 } finally { await browser.close(); }

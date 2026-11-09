@@ -24,7 +24,7 @@ export const conversationScenarios: readonly ConversationScenario[] = [
     intention: 'いつもの香ばしいお茶を探す。売り場の案内は頼みたいが、買う商品は自分で決める。',
     assets: {
       background: '/supermarket/supermarket-bg.webp',
-      expressions: { neutral: '/supermarket/tanaka-neutral.webp', confused: '/supermarket/tanaka-confused.webp', cautious: '/supermarket/tanaka-cautious.webp', relieved: '/supermarket/tanaka-relieved.webp' },
+      expressions: { neutral: '/supermarket/tanaka-neutral-v2.webp', confused: '/supermarket/tanaka-confused-v2.webp', cautious: '/supermarket/tanaka-cautious-v2.webp', relieved: '/supermarket/tanaka-relieved-v2.webp' },
     },
     assetGuide: '/supermarket/ASSETS.md',
     demo: [
@@ -47,7 +47,7 @@ export const conversationScenarios: readonly ConversationScenario[] = [
     intention: '自宅近くの桜町へ帰るため、駅前の青いバス乗り場を探している。駅員に一緒に案内を確かめてもらうことは受け入れられる。',
     assets: {
       background: '/station/station-bg.webp',
-      expressions: { neutral: '/station/yamamoto-neutral.webp', confused: '/station/yamamoto-confused.webp', cautious: '/station/yamamoto-cautious.webp', relieved: '/station/yamamoto-relieved.webp' },
+      expressions: { neutral: '/station/yamamoto-neutral-v2.webp', confused: '/station/yamamoto-confused-v2.webp', cautious: '/station/yamamoto-cautious-v2.webp', relieved: '/station/yamamoto-relieved-v2.webp' },
     },
     assetGuide: '/station/ASSETS.md',
     demo: [

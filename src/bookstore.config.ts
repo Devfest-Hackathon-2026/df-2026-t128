@@ -12,10 +12,10 @@ export interface BookstoreResponse {
 export const bookstoreAssets = {
   background: '/bookstore/bookstore-bg.webp',
   expressions: {
-    neutral: '/bookstore/sato-neutral.webp',
-    confused: '/bookstore/sato-confused.webp',
-    cautious: '/bookstore/sato-cautious.webp',
-    relieved: '/bookstore/sato-relieved.webp',
+    neutral: '/bookstore/sato-neutral-v2.webp',
+    confused: '/bookstore/sato-confused-v2.webp',
+    cautious: '/bookstore/sato-cautious-v2.webp',
+    relieved: '/bookstore/sato-relieved-v2.webp',
   } satisfies Record<BookstoreExpression, string>,
 };
 
