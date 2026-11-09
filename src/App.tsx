@@ -50,9 +50,7 @@ function App() {
   }, []);
   const logRef = useRef<HTMLDialogElement>(null);
   const mainRef = useRef<HTMLElement>(null);
-  const [quietMotion, setQuietMotion] = useState(false);
-  const [systemReduced, setSystemReduced] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-  const reducedMotion = quietMotion || systemReduced;
+  const [reducedMotion, setReducedMotion] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 
   async function initialize() {
     setBooting(true); setError(''); setReady(false);
@@ -73,7 +71,7 @@ function App() {
   }, []);
   useEffect(() => {
     const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const update = () => setSystemReduced(preference.matches);
+    const update = () => setReducedMotion(preference.matches);
     preference.addEventListener('change', update);
     return () => preference.removeEventListener('change', update);
   }, []);
@@ -147,7 +145,7 @@ function App() {
     } catch (reason) { if (current === operation.current) { setFailedAction('message'); setError(reason instanceof Error ? reason.message : '送信できませんでした。'); } }
     finally { if (current === operation.current) setPending(null); }
   }
-  async function end(reason: 'finish' | 'respect' | 'emergency') {
+  async function end(reason: 'finish' | 'emergency') {
     if (!session || pending === 'end') return;
     const current = ++operation.current; setPending('end'); setError('');
     try {
@@ -167,11 +165,6 @@ function App() {
   }
 
   const actualMode = session?.mode || mode;
-  const motionLabel = systemReduced ? '端末設定により動きを停止中' : reducedMotion ? '動きを再生' : '動きを一時停止';
-  const motionControl = <button className="play-motion" data-tip={motionLabel}
-    aria-label={motionLabel} disabled={systemReduced} onClick={() => setQuietMotion(v => !v)}>
-    <ControlIcon name={reducedMotion ? 'play' : 'pause'} />
-  </button>;
   return <div className="app-shell" data-screen={screen} data-motion={reducedMotion ? "reduced" : "full"}>
     <header className="site-header">
       <button className="brand" onClick={() => goHome()} aria-label="KindSignal ホームへ"><BrandMark /><span>KindSignal<span className="brand-dot">.</span></span></button>
@@ -179,7 +172,7 @@ function App() {
     </header>
 
     <main ref={mainRef} key={screen} className="screen-enter" data-tools-open={toolsOpen}>
-      {screen === 'chat' && <button className="immersive-tools" aria-label={toolsOpen ? '操作バーを隠す' : '操作バーを表示'} aria-expanded={toolsOpen} aria-controls="scene-toolbar" data-tip={toolsOpen ? '操作バーを隠す' : '操作バーを表示'} onClick={() => setToolsOpen(v => !v)}><ControlIcon name={toolsOpen ? 'close' : 'menu'} /></button>}
+      {screen === 'chat' && <button className="immersive-tools" aria-label={toolsOpen ? '操作バーを隠す' : '操作バーを表示'} aria-expanded={toolsOpen} aria-controls="scene-toolbar" data-tip={toolsOpen ? undefined : '操作バーを表示'} onClick={() => setToolsOpen(v => !v)}><ControlIcon name={toolsOpen ? 'close' : 'menu'} /></button>}
       {screen === 'reflection' && <div className="journey-header"><button className="text-button" onClick={() => goHome('places')}><ControlIcon name="back" /> 場所を選ぶ</button></div>}
       {screen === 'chat' && selected && <nav id="scene-toolbar" className="play-toolbar" aria-label="会話画面の操作">
         {!session && <button onClick={() => goHome('places')} aria-label="場所を選ぶ" data-tip="場所を選ぶ"><ControlIcon name="back" /></button>}
@@ -191,7 +184,7 @@ function App() {
           </>}
           <LinePlayback scenario={selected} session={session} cloudVoice={cloudVoice} waiting={pending === 'message'} voiceOn={voiceOn} />
           <button aria-label="セリフを自動で読み上げる" aria-pressed={voiceOn} data-tip={voiceOn ? '音声をオフにする' : '音声をオンにする'} onClick={() => setVoiceOn(v => !v)}><ControlIcon name={voiceOn ? 'sound' : 'mute'} /></button>
-          {motionControl}<FullscreenControl /></div>
+          <FullscreenControl /></div>
       </nav>}
       {error && (screen !== 'chat' || !failedAction) && <div className="error-banner" role="alert"><span>{error}</span>{!ready && !booting && <button onClick={() => void initialize()}>再読み込み</button>}</div>}
 
@@ -216,13 +209,12 @@ function App() {
 
         </div></>}
         </ConversationExperience>
-        {session && <dialog className="history-dialog end-dialog" ref={endRef} aria-labelledby="end-heading"><header><h2 id="end-heading">会話を終える</h2><button aria-label="閉じる" data-tip="閉じる" autoFocus onClick={() => endRef.current?.close()}><ControlIcon name="close" /></button></header>
-            <button disabled={!!pending} onClick={() => { endRef.current?.close(); void end('finish') }}>会話を終えて振り返る</button>
-            <button disabled={!!pending} onClick={() => { endRef.current?.close(); void end('respect') }}>手助けを断られたので終える</button>
-            <button disabled={pending === 'end'} onClick={() => { endRef.current?.close(); void end('emergency') }}>危険を感じたので中断する</button>
+        {session && <dialog className="history-dialog end-dialog" ref={endRef} aria-labelledby="end-heading"><header><h2 id="end-heading">会話を終える</h2><button aria-label="閉じる" autoFocus onClick={() => endRef.current?.close()}><ControlIcon name="close" /></button></header>
+            <button disabled={!!pending} onClick={() => { endRef.current?.close(); void end('finish') }}>振り返る</button>
+            <button disabled={pending === 'end'} onClick={() => { endRef.current?.close(); void end('emergency') }}>振り返らずに中断</button>
         </dialog>}
         {session && <dialog ref={logRef} className="history-dialog" aria-labelledby="log-heading">
-          <header><h2 id="log-heading">これまでのやり取り</h2><button data-tip="閉じる" aria-label="閉じる" onClick={() => logRef.current?.close()}><ControlIcon name="close" /></button></header>
+          <header><h2 id="log-heading">これまでのやり取り</h2><button aria-label="閉じる" onClick={() => logRef.current?.close()}><ControlIcon name="close" /></button></header>
           <p>{session.turnCount} / {session.maxTurns} 往復</p><ConversationModeNote mode={actualMode} />
           <ConversationHistory session={session} scenario={selected} />
         </dialog>}
@@ -230,7 +222,7 @@ function App() {
 
       {screen === 'reflection' && selected && session && <section className="reflection-page">
         <div className="reflection-heading"><h1>{session.status === 'interrupted' ? '練習を中断しました。' : '自分の声かけを振り返る'}</h1><p>{selected.title} <span>／</span> {selected.character}</p></div>
-        {session.status === 'interrupted' ? <div className="interrupted-panel"><h2>実際に危険を感じたときは、練習を離れて。</h2><p>このアプリでは緊急性の判断はできません。実際の場面ではご自身の安全を確保し、近くの職員や適切な緊急窓口に助けを求めてください。</p></div> : <>
+        {session.status === 'interrupted' ? <details className="interrupted-panel"><summary>実際に危険を感じたときは</summary><p>このアプリでは緊急性の判断はできません。実際の場面ではご自身の安全を確保し、近くの職員や適切な緊急窓口に助けを求めてください。</p></details> : <>
           {session.endReason === 'respect' ? <p className="respect-note">相手の意思を尊重して会話を終えました。</p> :
             !session.messages.some(message => message.role === 'user') && <p>今回は声をかけずに会話を終えました。</p>}
           {reflection ? <div className="reflection-grid"><article className="reflection-card"><h2>はじめに選んだ接し方</h2><blockquote>{reflection.action.label}</blockquote><p>{reflection.action.observation}</p><div className="principle-box"><p>{reflection.action.principle}</p></div></article><article className="reflection-card"><h2>{!session.messages.some(m => m.role === 'user') || reflection.conversation.source === 'fixed' ? 'この場面の振り返り' : reflection.conversation.source === 'demo' ? '声かけを見直すヒント' : '声かけを見直すヒント（AI）'}</h2>{reflection.conversation.quote && <blockquote>{reflection.conversation.quote}</blockquote>}<p>{reflection.conversation.observation}</p><div className="principle-box"><span>{reflection.conversation.source === 'fixed' ? '会話の終え方' : '次に試してみるなら'}</span><p>{reflection.conversation.suggestion}</p></div></article></div> : <div className="reflection-grid"><article className="reflection-card"><h2>はじめに選んだ接し方</h2><blockquote>{selected.actions.find(action => action.id === session.actionId)?.label}</blockquote><p>{selected.actions.find(action => action.id === session.actionId)?.reflection}</p><div className="principle-box"><p>{selected.actions.find(action => action.id === session.actionId)?.principle}</p></div></article><div className="loading-panel">{pending === 'reflection' || autoReflectionFor.current !== session.id ? <p role="status">振り返りを準備しています…</p> : <button className="secondary-button" disabled={!!pending} onClick={() => void retryReflection()}>再読み込み</button>}</div></div>}

@@ -96,7 +96,7 @@ try {
         // Page scrolling is allowed; the image frame dimensions must remain fixed.
         assert.equal(before.width, after.width); assert.equal(before.height, after.height);
         await page.getByRole('button',{name:'会話を終える',exact:true}).click();
-        await page.getByRole('button', { name: person === 'sato' ? '手助けを断られたので終える' : '会話を終えて振り返る', exact: true }).click();
+        await page.getByRole('button', { name: '振り返る', exact: true }).click();
         await assertions(page.getByRole('heading', { name: '自分の声かけを振り返る', exact: true })).toBeVisible();
         await assertions(page.getByRole('heading', { name: '声かけを見直すヒント', exact: true })).toBeVisible();
         await page.getByRole('button', { name: '同じ人ともう一度話す', exact: false }).click();
@@ -148,11 +148,11 @@ try {
     assert.equal(await page.locator('.bookstore-person[data-visible="true"]').evaluate(element => getComputedStyle(element).transitionDuration), '0s');
     assert.equal(await page.locator('.bookstore-background').evaluate(element => getComputedStyle(element).animationName), 'none');
     await page.emulateMedia({ reducedMotion: 'no-preference' });
-    const motion = page.getByRole('button', { name: '動きを一時停止', exact: true });
-    await assertions(motion).toBeEnabled();
+    await assertions(page.locator('.bookstore-stage')).toHaveAttribute('data-reduced', 'false');
+    await assertions(page.getByRole('button', {name:/動きを/})).toHaveCount(0);
     assert.notEqual(await page.locator('.bookstore-person[data-visible="true"]').evaluate(element => getComputedStyle(element).transitionDuration), '0s');
-    await motion.click();
-    await assertions(page.getByRole('button', { name: '動きを再生', exact: true })).toBeEnabled();
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await assertions(page.locator('.bookstore-stage')).toHaveAttribute('data-reduced', 'true');
     assert.equal(await page.locator('.bookstore-background').evaluate(element => getComputedStyle(element).animationName), 'none');
     // Short viewport models limited vertical space, not an actual phone keyboard.
     await page.setViewportSize({ width: 320, height: 430 });
@@ -188,8 +188,8 @@ try {
           await assertions(page.locator('.composer')).toHaveAttribute('aria-busy', 'true');
           await assertions(input).toBeDisabled();
           await page.getByRole('button',{name:'会話を終える',exact:true}).click();
-          await assertions(page.getByRole('button', { name: '会話を終えて振り返る', exact: true })).toBeDisabled();
-          await assertions(page.getByRole('button', { name: '手助けを断られたので終える', exact: true })).toBeDisabled();
+          await assertions(page.getByRole('button', { name: '振り返る', exact: true })).toBeDisabled();
+          await assertions(page.getByRole('button', { name: '振り返らずに中断', exact: true })).toBeEnabled();
           await page.getByRole('button',{name:'閉じる',exact:true}).click();
           // Duplicate form submission cannot issue a second logical send while waiting.
           await page.locator('.composer').evaluate(form => form.requestSubmit());
@@ -228,15 +228,15 @@ try {
         else await route.continue();
       });
       await page.getByRole('button',{name:'会話を終える',exact:true}).click();
-      await page.getByRole('button', { name: '手助けを断られたので終える', exact: true }).click();
+      await page.getByRole('button', { name: '振り返る', exact: true }).click();
       await assertions(page.getByRole('alert')).toBeInViewport();
       await assertions(page.getByRole('alert')).toContainText('画面の会話と入力は残っています');
       await assertions(input).toHaveValue('終了時にも残る下書き');
       await assertions(page.getByRole('button', { name: 'もう一度送る', exact: true })).toHaveCount(0);
       await page.getByRole('button',{name:'会話を終える',exact:true}).click();
-      await page.getByRole('button', { name: '手助けを断られたので終える', exact: true }).click();
+      await page.getByRole('button', { name: '振り返る', exact: true }).click();
       await assertions(page.getByRole('heading', { name: '自分の声かけを振り返る', exact: true })).toBeVisible();
-      await assertions(page.locator('.respect-note')).toBeVisible();
+      await assertions(page.locator('.respect-note')).toHaveCount(0);
       await assertions(page.getByRole('alert')).toHaveCount(0);
       assert.equal(attempts, 2);
     });
