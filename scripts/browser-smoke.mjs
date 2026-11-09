@@ -119,6 +119,12 @@ try {
   console.log('PASS viewport-rotation/limited-height/draft-retention');
   await fixture({ width: 390, height: 844 }, 'tanaka', async (page, origin, received) => {
     const session = await chooseAndStart(page, scenarios[0], 'tanaka');
+    // Exercise a controlled PWA document, not just an unregistered first visit.
+    await page.evaluate(async () => {
+      await navigator.serviceWorker.ready;
+      if (!navigator.serviceWorker.controller) await new Promise(resolve =>
+        navigator.serviceWorker.addEventListener('controllerchange', resolve, {once:true}));
+    });
     // A BFCache-style pagehide must preserve the current conversation.
     await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pagehide', { persisted: true })));
     await page.getByLabel('発言や行動を入力').fill('どんなお茶を探していますか。');
@@ -129,6 +135,7 @@ try {
     // Observe the server: the previous document cannot reliably receive an unload response.
     await assertions.poll(() => received.find(request => request.path === '/api/sessions/' + session.id && request.method === 'DELETE')?.status).toBe(204);
     await assertions(page.getByRole('button', { name: '場所を選ぶ', exact: false })).toBeVisible();
+    assert.equal(await page.evaluate(() => sessionStorage.getItem('kindsignal.pending-release')), null);
     assert.equal((await page.request.post(origin + '/api/sessions/' + session.id + '/messages', { data: { text: 'こんにちは' } })).status(), 404);
   });
   console.log('PASS reload/releases-previous-session');
