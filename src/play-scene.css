@@ -63,3 +63,45 @@
 .opening-actions legend { padding-top: 1rem; font-weight: 650; }
 .opening-actions button { width: 100%; min-height: 48px; padding: .8rem 0; display: flex; justify-content: space-between; align-items: center; gap: 1rem; text-align: left; border: 0; border-bottom: 1px solid #bac4b9; color: inherit; background: transparent; font: inherit; cursor: pointer; }
 .opening-actions button svg { flex: none; }
+
+/* Dialogue and the player's controls share one stage. Keep the face clear. */
+[data-screen=chat] .bookstore-dialogue strong {
+  display:inline-block; margin-bottom:.2em; font-size:1rem; font-weight:650; color:#f5d8a0;
+}
+[data-screen=chat] .bookstore-interface { border-radius:0; border-inline-start:3px solid #d7b878; text-align:start; }
+[data-screen=chat] .opening-actions { min-width:0; width:100%; color:#fdfbf3; background:#193128; }
+[data-screen=chat] .opening-actions button { min-height:52px; color:inherit; border-color:#637569; }
+[data-screen=chat] .opening-actions button:is(:hover,:focus-visible) { color:#ffe4a8; background:#ffffff0f; }
+[data-screen=chat] .opening-actions button:active { background:#ffffff24; }
+[data-screen=chat] .conversation-record { width:100%; }
+@media (min-width:900px) {
+  [data-screen=chat] .novel-experience {
+    display:grid; grid-template-columns:minmax(0,1fr) clamp(360px,35vw,540px);
+    grid-template-rows:minmax(calc(100svh - 56px),auto) auto;
+  }
+  [data-screen=chat] .bookstore-stage {
+    grid-area:1 / 1 / 2 / 3; padding:0; min-height:36rem; align-self:stretch;
+  }
+  [data-screen=chat] .bookstore-person { width:calc(100% - clamp(360px,35vw,540px)); object-position:center top; }
+  [data-screen=chat] .bookstore-interface {
+    margin:0 0 clamp(20px,4vh,64px) clamp(16px,3vw,64px);
+    width:min(720px,calc(100% - clamp(360px,35vw,540px) - 8vw));
+    padding:18px 24px;
+  }
+  [data-screen=chat] :is(.opening-actions,.story-controls) {
+    position:relative; grid-area:1 / 2; align-self:center; min-width:0;
+    width:calc(100% - 32px); max-width:none; margin:24px 32px 24px 0;
+    padding:20px 24px; box-shadow:0 8px 32px #11251c38;
+  }
+  [data-screen=chat] .opening-actions { background:rgba(19,39,31,.94); }
+  [data-screen=chat] .opening-actions legend { float:left; width:100%; padding:0 0 8px; color:#f5d8a0; }
+  [data-screen=chat] .story-controls { background:#fcfaf2f5; }
+  [data-screen=chat] .conversation-end-actions { grid-template-columns:1fr; gap:6px; margin:12px 0; }
+  [data-screen=chat] .conversation-record { grid-column:1/-1; max-width:none; }
+}
+@media(max-width:899px) {
+  [data-screen=chat] .bookstore-stage { min-height:clamp(220px,45svh,460px); }
+  [data-screen=chat] .bookstore-interface { width:100%; margin:0; }
+  [data-screen=chat] .opening-actions { max-width:none; padding:12px 20px 20px; }
+  [data-screen=chat] .opening-actions legend { float:left; width:100%; padding:0 0 4px; }
+}
