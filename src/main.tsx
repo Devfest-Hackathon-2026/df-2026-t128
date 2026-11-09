@@ -10,3 +10,5 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 
 import './material.css';
 import './play-scene.css';
+
+import './practice-design.css';

@@ -33,7 +33,7 @@ async function fixture(viewport, character, run) {
   try {
     await page.goto(origin);
     await assertions(page.locator('.practice-choice')).toHaveCount(0);
-    await page.getByRole('button', { name: 'ゲームを始める', exact: false }).click();
+    await page.getByRole('button', { name: '場所を選ぶ', exact: false }).click();
     await assertions(page.locator('.practice-welcome')).toHaveCount(0);
     await run(page, origin);
     assert.deepEqual(errors, []);
@@ -73,7 +73,7 @@ try {
       await fixture(viewport, person, async page => {
         const started = await chooseAndStart(page, scene, person);
         assert.equal(started.characterId, person);
-        await assertions(page.locator('.conversation-mode-note')).toContainText('決まった返事');
+        await assertions(page.locator('.conversation-mode-note')).toContainText('用意した返事');
         await assertions(page.locator('.scene-image-status')).toBeEmpty();
         await checkLayout(page);
         const before = await page.locator('.bookstore-person[data-visible="true"]').boundingBox();

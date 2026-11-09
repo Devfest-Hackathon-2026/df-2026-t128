@@ -171,9 +171,9 @@ function App() {
     </header>
 
     <main ref={mainRef} key={screen} className="screen-enter">
-      {screen === 'reflection' && <div className="journey-header"><button className="text-button" onClick={() => goHome('places')}><ControlIcon name="back" /> 場面一覧</button></div>}
+      {screen === 'reflection' && <div className="journey-header"><button className="text-button" onClick={() => goHome('places')}><ControlIcon name="back" /> 場所を選ぶ</button></div>}
       {screen === 'chat' && selected && <nav className="play-toolbar" aria-label="会話画面の操作">
-        <button onClick={() => goHome('places')}><ControlIcon name="back" />場面一覧</button>
+        <button onClick={() => goHome('places')}><ControlIcon name="back" />場所を選ぶ</button>
         <h1>{selected.location}</h1>
         <div className="play-tools">
           <button aria-label="セリフを自動で読み上げる" aria-pressed={voiceOn} title={voiceOn ? '音声をオフにする' : '音声をオンにする'} onClick={() => setVoiceOn(v => !v)}><ControlIcon name={voiceOn ? 'sound' : 'mute'} /></button>
@@ -219,7 +219,7 @@ function App() {
         <details className="transcript"><summary>今回の会話を見返す <span>{session.messages.length}件</span></summary><div>{session.messages.map((message, i) => <p key={i}><strong>{message.role === 'user' ? 'あなた' : selected.character}</strong>{message.text}</p>)}</div></details>
         <div className="reflection-actions practice-retry-actions">
           <button className="primary-button" onClick={() => selectScenario(selected, practiceCharacterId(session))}>同じ相手でもう一度</button>
-          <button className="secondary-button" onClick={() => selectScenario(selected)}>同じ場所で人物を再抽選</button>
+          <button className="secondary-button" onClick={() => selectScenario(selected)}>同じ場所でもう一度</button>
           <button className="secondary-button" onClick={() => goHome('places')}>ほかの場所を選ぶ</button>
         </div>
         <p className="storage-note">会話の履歴は最長30分で消えます。もう一度練習すると、今の会話は見返せません。</p>
