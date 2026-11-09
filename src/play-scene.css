@@ -88,3 +88,12 @@
   [data-screen=chat] .opening-actions { max-width:none; padding:12px 20px 20px; }
   [data-screen=chat] .opening-actions legend { float:left; width:100%; padding:0 0 4px; }
 }
+
+/* Keep the controls in reading order; surplus height belongs to the portrait. */
+[data-screen=chat] main { display:flex; flex-direction:column; }
+[data-screen=chat] .play-toolbar { flex:none; }
+[data-screen=chat] .novel-experience { display:flex; flex:1 0 auto; flex-direction:column; }
+[data-screen=chat] .bookstore-stage { flex:1 0 auto; }
+[data-screen=chat] :is(.opening-actions,.story-controls,.conversation-record) { flex:none; }
+[data-screen=chat] .opening-actions { padding-bottom:max(12px,env(safe-area-inset-bottom)); }
+[data-screen=chat] .novel-experience > .bookstore-stage { width:100%; align-self:stretch; }

@@ -68,3 +68,19 @@ body { background: var(--ks-stage); }
   .practice-welcome { grid-template-areas:"intro" "image" "entry"; }
   .practice-example svg { aspect-ratio:2.45; }
 }
+
+/* Header and footer take their natural height. Give the remaining space to
+   the scene, without fixing the page height when text wraps or a phone rotates. */
+.app-shell:not([data-screen=chat]) { min-height:100dvh; }
+.app-shell:not([data-screen=chat]) > main { min-height:0; flex:1 0 auto; }
+.app-shell:is([data-screen=home],[data-screen=places]) > main {
+  display:flex; flex-direction:column; justify-content:center;
+}
+.practice-welcome,.practice-list { width:100%; }
+.app-shell .team-credit { padding-block:12px max(12px,env(safe-area-inset-bottom)); }
+@media(min-width:741px) {
+  .practice-example svg { height:clamp(280px,55svh,650px); }
+}
+@media(min-width:701px) {
+  .practice-art { height:clamp(175px,42svh,450px); }
+}
