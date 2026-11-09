@@ -61,3 +61,29 @@
 .character-line { position:relative; }
 .line-skip { position:absolute; inset:0; width:100%; height:100%; border:0; padding:0; background:transparent; cursor:pointer; }
 .character-line .line-skip:focus-visible { outline:2px solid var(--ks-speaker); outline-offset:-2px; }
+
+/* Only the small menu handle stays over the scene in fullscreen. */
+.immersive-tools { display:none; }
+main:fullscreen .immersive-tools {
+  display:grid; place-items:center; position:absolute; top:max(6px,env(safe-area-inset-top));
+  right:max(8px,env(safe-area-inset-right)); z-index:5; width:44px; height:44px;
+  border:0; border-radius:50%; background:#15291fcb; color:var(--ks-on-stage);
+}
+.app-shell main:fullscreen .play-toolbar { position:absolute; inset:0 0 auto; padding-right:60px; z-index:4; background:var(--ks-stage); }
+.app-shell main:fullscreen:not([data-tools-open=true]) .play-toolbar { display:none; }
+.app-shell .end-dialog > button {
+  display:block; width:100%; height:auto; min-height:48px; text-align:start; font:inherit;
+  padding:.6rem 1rem; margin-top:.5rem; border-radius:var(--ks-action-radius);
+  color:var(--ks-ink); background:#e8ede4;
+}
+button[data-tip] { position:relative; }
+button[data-tip]::after {
+  content:attr(data-tip); position:absolute; inset:calc(100% + 3px) 0 auto auto;
+  width:max-content; max-width:min(14rem,80vw); padding:.3rem .55rem; border-radius:.35rem;
+  background:#0a1710; color:#fff; font:500 .875rem/1.5 system-ui,sans-serif;
+  pointer-events:none; visibility:hidden; z-index:7;
+}
+.play-toolbar > button:first-child::after { right:auto; left:0; }
+.message-pill button[data-tip]::after { top:auto; bottom:calc(100% + 3px); }
+button[data-tip]:focus-visible::after { visibility:visible; }
+@media (hover:hover) { button[data-tip]:hover::after { visibility:visible; } }

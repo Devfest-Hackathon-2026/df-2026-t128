@@ -41,6 +41,13 @@ function App() {
   const messageAttempt = useRef(createMessageAttempt());
   const cleanup = useRef(createSessionCleanup());
   const autoReflectionFor = useRef<string | null>(null);
+  const endRef = useRef<HTMLDialogElement>(null);
+  const [toolsOpen, setToolsOpen] = useState(false);
+  useEffect(() => {
+    const reset = () => setToolsOpen(false);
+    document.addEventListener('fullscreenchange', reset);
+    return () => document.removeEventListener('fullscreenchange', reset);
+  }, []);
   const logRef = useRef<HTMLDialogElement>(null);
   const mainRef = useRef<HTMLElement>(null);
   const [quietMotion, setQuietMotion] = useState(false);
@@ -161,7 +168,7 @@ function App() {
 
   const actualMode = session?.mode || mode;
   const motionLabel = systemReduced ? '端末設定により動きを停止中' : reducedMotion ? '動きを再生' : '動きを一時停止';
-  const motionControl = (className: string) => <button className={className} title={motionLabel}
+  const motionControl = (className: string) => <button className={className} data-tip={motionLabel}
     aria-label={motionLabel} disabled={systemReduced} onClick={() => setQuietMotion(v => !v)}>
     <ControlIcon name={reducedMotion ? 'play' : 'pause'} />
   </button>;
@@ -171,20 +178,19 @@ function App() {
       <div className="header-right">{motionControl('motion-toggle')}{ready && actualMode === 'demo' && <span className="mode-note">定型応答</span>}</div>
     </header>
 
-    <main ref={mainRef} key={screen} className="screen-enter">
+    <main ref={mainRef} key={screen} className="screen-enter" data-tools-open={toolsOpen}>
+      {screen === 'chat' && <button className="immersive-tools" aria-label={toolsOpen ? '操作バーを隠す' : '操作バーを表示'} aria-expanded={toolsOpen} aria-controls="scene-toolbar" data-tip={toolsOpen ? '操作バーを隠す' : '操作バーを表示'} onClick={() => setToolsOpen(v => !v)}><ControlIcon name={toolsOpen ? 'close' : 'menu'} /></button>}
       {screen === 'reflection' && <div className="journey-header"><button className="text-button" onClick={() => goHome('places')}><ControlIcon name="back" /> 場所を選ぶ</button></div>}
-      {screen === 'chat' && selected && <nav className="play-toolbar" aria-label="会話画面の操作">
-        <button onClick={() => goHome('places')} aria-label="場所を選ぶ" title="場所を選ぶ"><ControlIcon name="back" /></button>
+      {screen === 'chat' && selected && <nav id="scene-toolbar" className="play-toolbar" aria-label="会話画面の操作">
+        {!session && <button onClick={() => goHome('places')} aria-label="場所を選ぶ" data-tip="場所を選ぶ"><ControlIcon name="back" /></button>}
         <h1>{selected.location}</h1>
         <div className="play-tools">
           {session && <>
-            <button title="これまでのやり取り" aria-label="これまでのやり取り" aria-haspopup="dialog" onClick={() => logRef.current?.showModal()}><ControlIcon name="history" /></button>
-            <button title="会話を終えて振り返る" aria-label="会話を終えて振り返る" disabled={!!pending} onClick={() => void end('finish')}><ControlIcon name="review" /></button>
-            <button title="手助けを断られたので終える" aria-label="手助けを断られたので終える" disabled={!!pending} onClick={() => void end('respect')}><ControlIcon name="leave" /></button>
-            <button title="危険を感じたので中断する" aria-label="危険を感じたので中断する" disabled={pending === 'end'} onClick={() => void end('emergency')}><ControlIcon name="interrupt" /></button>
+            <button data-tip="これまでのやり取り" aria-label="これまでのやり取り" aria-haspopup="dialog" onClick={() => logRef.current?.showModal()}><ControlIcon name="history" /></button>
+            <button data-tip="会話を終える" aria-label="会話を終える" aria-haspopup="dialog" onClick={() => endRef.current?.showModal()}><ControlIcon name="leave" /></button>
           </>}
           <LinePlayback scenario={selected} session={session} cloudVoice={cloudVoice} waiting={pending === 'message'} voiceOn={voiceOn} />
-          <button aria-label="セリフを自動で読み上げる" aria-pressed={voiceOn} title={voiceOn ? '音声をオフにする' : '音声をオンにする'} onClick={() => setVoiceOn(v => !v)}><ControlIcon name={voiceOn ? 'sound' : 'mute'} /></button>
+          <button aria-label="セリフを自動で読み上げる" aria-pressed={voiceOn} data-tip={voiceOn ? '音声をオフにする' : '音声をオンにする'} onClick={() => setVoiceOn(v => !v)}><ControlIcon name={voiceOn ? 'sound' : 'mute'} /></button>
           {motionControl('play-motion')}<FullscreenControl /></div>
       </nav>}
       {error && (screen !== 'chat' || !failedAction) && <div className="error-banner" role="alert"><span>{error}</span>{!ready && !booting && <button onClick={() => void initialize()}>再読み込み</button>}</div>}
@@ -201,7 +207,7 @@ function App() {
           <form onSubmit={sendMessage} className="composer" aria-busy={pending === 'message'}>
             <label className="sr-only" htmlFor="message-input">返事を入力</label>
             <div className="message-pill"><textarea id="message-input" placeholder={pending === 'message' ? '返事を待っています…' : '返事を入力'} value={draft} onChange={event => setDraft(event.target.value)} maxLength={500} rows={1} disabled={!!pending} aria-describedby={error && failedAction === 'message' ? 'message-help conversation-error' : 'message-help'} />
-              <button type="submit" title={error && failedAction === 'message' ? 'もう一度送る' : '声をかける'} aria-label={error && failedAction === 'message' ? 'もう一度送る' : '声をかける'} disabled={!draft.trim() || !!pending}><ControlIcon name="send" /></button>
+              <button type="submit" data-tip={error && failedAction === 'message' ? 'もう一度送る' : '声をかける'} aria-label={error && failedAction === 'message' ? 'もう一度送る' : '声をかける'} disabled={!draft.trim() || !!pending}><ControlIcon name="send" /></button>
             </div>
             <span id="message-help" className="sr-only">500文字まで。個人情報は入力しないでください。</span>
             {error && failedAction === 'message' && <div id="conversation-error" className="conversation-error" role="alert" ref={chatErrorRef}><p>{error}</p><p>入力した文章は残っています。送信ボタンで再送できます。</p></div>}
@@ -210,8 +216,13 @@ function App() {
 
         </div></>}
         </ConversationExperience>
+        {session && <dialog className="history-dialog end-dialog" ref={endRef} aria-labelledby="end-heading"><header><h2 id="end-heading">会話を終える</h2><button aria-label="閉じる" data-tip="閉じる" autoFocus onClick={() => endRef.current?.close()}><ControlIcon name="close" /></button></header>
+            <button disabled={!!pending} onClick={() => { endRef.current?.close(); void end('finish') }}>会話を終えて振り返る</button>
+            <button disabled={!!pending} onClick={() => { endRef.current?.close(); void end('respect') }}>手助けを断られたので終える</button>
+            <button disabled={pending === 'end'} onClick={() => { endRef.current?.close(); void end('emergency') }}>危険を感じたので中断する</button>
+        </dialog>}
         {session && <dialog ref={logRef} className="history-dialog" aria-labelledby="log-heading">
-          <header><h2 id="log-heading">これまでのやり取り</h2><button title="閉じる" aria-label="閉じる" onClick={() => logRef.current?.close()}><ControlIcon name="close" /></button></header>
+          <header><h2 id="log-heading">これまでのやり取り</h2><button data-tip="閉じる" aria-label="閉じる" onClick={() => logRef.current?.close()}><ControlIcon name="close" /></button></header>
           <p>{session.turnCount} / {session.maxTurns} 往復</p><ConversationModeNote mode={actualMode} />
           <ConversationHistory session={session} scenario={selected} />
         </dialog>}

@@ -1,6 +1,7 @@
 const paths = {
   device: 'M7 2h10v20H7z M11 19h2',
-  history: 'M3 4v5h5 M3 9a9 9 0 1 1 0 7 M12 7v5l3 2',
+  history: 'M3 4h18v13H9l-6 4z M7 8h10 M7 12h7',
+  menu: 'M4 6h16 M4 12h16 M4 18h16',
   review: 'M3 4c4-1 6 0 9 2 3-2 5-3 9-2v15c-4-1-6 0-9 2-3-2-5-3-9-2z M12 6v14',
   leave: 'M10 4H4v16h6 M9 12h12m-5-5 5 5-5 5',
   interrupt: 'm12 3 10 17H2z M12 9v5 M12 16v1',

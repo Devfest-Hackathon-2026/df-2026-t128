@@ -39,7 +39,7 @@ export function DeviceVoice({ text, enabled, disabled }: { text: string; enabled
     return () => { clearTimeout(timer); synth?.removeEventListener('voiceschanged',start); stop(); };
   }, [enabled, disabled, play, stop]);
   return <div className="speech-playback">
-    <button className="reveal-button" type="button" aria-label="セリフをもう一度聞く" title="セリフをもう一度聞く" disabled={!enabled || disabled} onClick={play}><ControlIcon name="play" /></button>
+    <button className="reveal-button" type="button" aria-label="セリフをもう一度聞く" data-tip="セリフをもう一度聞く" disabled={!enabled || disabled} onClick={play}><ControlIcon name="play" /></button>
     {hint && <small role="status">{hint}</small>}
   </div>;
 }

@@ -67,7 +67,7 @@ async function checkLayout(page) {
   await assertReplyBefore(page, '.composer');
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'No horizontal page overflow');
   await assertions(page.locator('.bookstore-person[data-visible="true"]')).toHaveCount(1);
-  for (const name of ['声をかける', '会話を終えて振り返る', '手助けを断られたので終える']) {
+  for (const name of ['声をかける', '会話を終える']) {
     const control = page.getByRole('button', { name, exact: true });
     await control.scrollIntoViewIfNeeded();
     const box = await control.boundingBox();
@@ -90,11 +90,12 @@ try {
         const before = await page.locator('.bookstore-person[data-visible="true"]').boundingBox();
         await page.getByLabel('返事を入力').fill('何かお手伝いできることはありますか。');
         await page.getByRole('button', { name: '声をかける', exact: true }).click();
-        await assertions(page.locator('.history-dialog')).toContainText('1 / 5 往復');
+        await assertions(page.locator('dialog[aria-labelledby="log-heading"]')).toContainText('1 / 5 往復');
         await assertions(page.locator('.scene-image-status')).toBeEmpty();
         const after = await page.locator('.bookstore-person[data-visible="true"]').boundingBox();
         // Page scrolling is allowed; the image frame dimensions must remain fixed.
         assert.equal(before.width, after.width); assert.equal(before.height, after.height);
+        await page.getByRole('button',{name:'会話を終える',exact:true}).click();
         await page.getByRole('button', { name: person === 'sato' ? '手助けを断られたので終える' : '会話を終えて振り返る', exact: true }).click();
         await assertions(page.getByRole('heading', { name: '自分の声かけを振り返る', exact: true })).toBeVisible();
         await assertions(page.getByRole('heading', { name: '声かけを見直すヒント', exact: true })).toBeVisible();
@@ -156,7 +157,7 @@ try {
     // Short viewport models limited vertical space, not an actual phone keyboard.
     await page.setViewportSize({ width: 320, height: 430 });
     await checkLayout(page);
-    await assertions(page.locator('.history-dialog')).toContainText('4 / 5 往復');
+    await assertions(page.locator('dialog[aria-labelledby="log-heading"]')).toContainText('4 / 5 往復');
     assert.ok(session.id);
   });
   for (const viewport of [{ width: 1440, height: 1000 }, { width: 390, height: 844 }]) {
@@ -186,8 +187,10 @@ try {
         try {
           await assertions(page.locator('.composer')).toHaveAttribute('aria-busy', 'true');
           await assertions(input).toBeDisabled();
+          await page.getByRole('button',{name:'会話を終える',exact:true}).click();
           await assertions(page.getByRole('button', { name: '会話を終えて振り返る', exact: true })).toBeDisabled();
           await assertions(page.getByRole('button', { name: '手助けを断られたので終える', exact: true })).toBeDisabled();
+          await page.getByRole('button',{name:'閉じる',exact:true}).click();
           // Duplicate form submission cannot issue a second logical send while waiting.
           await page.locator('.composer').evaluate(form => form.requestSubmit());
           await assertions(page.locator('.bookstore-dialogue')).toHaveText(before);
@@ -199,12 +202,12 @@ try {
         await assertions(input).toHaveValue('いつものお茶について教えてください。');
         await assertions(input).toHaveAttribute('aria-describedby', 'message-help conversation-error');
         await assertions(page.locator('.composer')).toHaveAttribute('aria-busy', 'false');
-        await assertions(page.locator('.history-dialog')).toContainText('0 / 5 往復');
+        await assertions(page.locator('dialog[aria-labelledby="log-heading"]')).toContainText('0 / 5 往復');
         assert.equal(requests.length, 1);
         if (failure === 'edited-draft') await input.fill('緑の袋のお茶をお探しですか。');
         if (failure === 'unavailable') await page.screenshot({ path: `output/browser-smoke/message-error-${viewport.width}.png`, fullPage: false });
         await page.getByRole('button', { name: 'もう一度送る', exact: true }).click();
-        await assertions(page.locator('.history-dialog')).toContainText('1 / 5 往復');
+        await assertions(page.locator('dialog[aria-labelledby="log-heading"]')).toContainText('1 / 5 往復');
         await assertions(page.getByRole('alert')).toHaveCount(0);
         await assertions(input).toHaveValue('');
         assert.equal(requests.length, 2);
@@ -224,11 +227,13 @@ try {
         if (++attempts === 1) await route.fulfill({ status: 503, json: { error: '終了を確認できませんでした。もう一度お試しください。' } });
         else await route.continue();
       });
+      await page.getByRole('button',{name:'会話を終える',exact:true}).click();
       await page.getByRole('button', { name: '手助けを断られたので終える', exact: true }).click();
       await assertions(page.getByRole('alert')).toBeInViewport();
       await assertions(page.getByRole('alert')).toContainText('画面の会話と入力は残っています');
       await assertions(input).toHaveValue('終了時にも残る下書き');
       await assertions(page.getByRole('button', { name: 'もう一度送る', exact: true })).toHaveCount(0);
+      await page.getByRole('button',{name:'会話を終える',exact:true}).click();
       await page.getByRole('button', { name: '手助けを断られたので終える', exact: true }).click();
       await assertions(page.getByRole('heading', { name: '自分の声かけを振り返る', exact: true })).toBeVisible();
       await assertions(page.locator('.respect-note')).toBeVisible();

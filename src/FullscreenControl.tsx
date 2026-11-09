@@ -11,7 +11,7 @@ export function FullscreenControl() {
   }, []);
   if (!document.fullscreenEnabled || failed) return null;
   const label = active ? '全画面を解除' : '全画面で表示';
-  return <button type="button" title={label} aria-label={label} aria-pressed={active} onClick={async e => {
+  return <button type="button" data-tip={label} aria-label={label} aria-pressed={active} onClick={async e => {
     try {
       if (document.fullscreenElement) await document.exitFullscreen();
       else await e.currentTarget.closest('main')?.requestFullscreen();
