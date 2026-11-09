@@ -1,0 +1,61 @@
+.app-shell[data-screen=chat] { max-width: none; margin: 0; padding: 0; background: #14251e; color: #faf8ee; }
+[data-screen=chat] > :is(header,footer) { display:none; }
+[data-screen=chat] main { margin:0; max-width:none; padding:0; background:#14251e; color:inherit; min-height:100dvh; }
+[data-screen=chat] main:fullscreen { overflow:auto; }
+.play-toolbar { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:4px clamp(10px,3vw,40px); }
+.play-toolbar h1 { font-size:clamp(1rem,2vw,1.4rem); margin:0; }
+.play-toolbar div,.play-toolbar button { display:flex; align-items:center; gap:6px; }
+.play-toolbar button { color:inherit; border:0; background:transparent; padding:0 8px; min-height:48px; min-width:48px; justify-content:center; }
+.play-toolbar button:hover { background:#ffffff18; }
+[data-screen=chat] :focus-visible { outline:3px solid #dbb970; outline-offset:2px; }
+[data-screen=chat] .novel-experience { display:block; max-width:none; margin:0; padding:0; }
+[data-screen=chat] .bookstore-stage { padding:0; min-height:clamp(350px,64dvh,900px); border-radius:0; }
+[data-screen=chat] .bookstore-person { left:0; top:0; width:100%; height:100%; transform:none; }
+[data-screen=chat] .bookstore-interface { width:min(100%,960px); padding:12px clamp(16px,3vw,32px); display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:0 16px; background:#102019ee; border:0; border-radius:12px 12px 0 0; }
+.bookstore-interface .bookstore-dialogue { grid-column:1; }
+.bookstore-interface .bookstore-dialogue p { line-height:1.65; font-size:clamp(1rem,2vw,1.22rem); }
+[data-screen=chat] .bookstore-interface > p { grid-column:1; margin:0; }
+.bookstore-interface .speech-playback { grid-column:2; grid-row:1 / 3; max-width:12em; }
+[data-screen=chat] .story-controls,[data-screen=chat] .conversation-record { max-width:960px; margin:0 auto; background:#faf9f2; color:#253a2e; padding:16px clamp(16px,3vw,32px); }
+[data-screen=chat] .story-controls .composer { margin:0; }
+[data-screen=chat] .story-controls textarea { min-height:48px; }
+[data-screen=chat] .story-exit-options { display:flex; gap:8px 24px; flex-wrap:wrap; }
+[data-screen=chat] .exit-choice { padding-right:32px; }
+@media(max-width:640px){
+ .play-toolbar { gap:4px; flex-wrap:wrap; }
+ .play-toolbar h1 { flex:1; }
+ .play-toolbar .play-motion { font-size:.78rem; }
+ [data-screen=chat] .bookstore-stage { min-height:clamp(260px,49dvh,440px); }
+ [data-screen=chat] .bookstore-interface { border-radius:0; }
+ [data-screen=chat] .composer-bottom > span { flex-basis:auto; }
+ [data-screen=chat] .composer-bottom .primary-button { width:auto; }
+}
+.bookstore-interface .speech-playback .reveal-button { color:#faf8ee; }
+[data-screen=chat] #message-input { appearance:none; resize:none; height:4.5rem; min-height:4.5rem; max-height:4.5rem; overflow-y:auto; box-sizing:border-box; font:inherit; font-size:16px; line-height:1.5; }
+[data-screen=chat] .bookstore-interface { background:linear-gradient(110deg,rgba(10,24,18,.87),rgba(10,24,18,.72)); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); }
+.bookstore-dialogue p { color:white; text-shadow:0 1px 3px #000b; }
+.play-tools button { flex:none; }
+.practice-retry-actions { flex-wrap:wrap; }
+.practice-retry-help { max-width:46rem; margin:16px auto; color:#536448; font-size:.875rem; line-height:1.7; }
+.practice-retry-help p { margin:8px 0; }
+.conversation-mode-note { margin:0 0 12px; color:#435a48; font-size:.875rem; line-height:1.6; }
+.conversation-error { margin:12px 0; padding:12px 16px; border:1px solid #a64c36; border-radius:8px; background:#fff1e9; color:#6b2d20; font-size:1rem; line-height:1.6; overflow-wrap:anywhere; scroll-margin-block:16px; }
+.conversation-error p { margin:0; }
+.conversation-error p + p { margin-top:8px; }
+.conversation-end-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; margin:20px 0; }
+.conversation-end-actions .secondary-button { width:100%; min-height:48px; white-space:normal; }
+.conversation-end-actions p { margin:8px 0 0; color:#435a48; font-size:.875rem; line-height:1.6; }
+@media(max-width:600px) { .conversation-end-actions { grid-template-columns:1fr; gap:12px; } }
+.speech-playback small { display:block; font-size:.85rem; line-height:1.4; color:white; }
+@media(max-width:690px) {
+ .play-toolbar { display:grid; grid-template-columns:auto 1fr; }
+ .play-toolbar h1 { grid-row:2; grid-column:1/-1; padding:0 8px 6px; }
+ .play-toolbar .play-tools { justify-self:end; gap:0; flex-wrap:wrap; justify-content:flex-end; }
+ .play-toolbar .play-motion { min-width:0; }
+ .bookstore-interface .speech-playback { max-width:7em; }
+}
+@media(max-width:690px){
+ .play-toolbar > button { font-size:.875rem; padding-inline:2px; }
+ .play-toolbar .play-tools { gap:0; }
+ .play-toolbar .play-tools button { width:44px; min-width:44px; padding:0; }
+}

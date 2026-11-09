@@ -1,0 +1,47 @@
+.practice-list { max-width: 1020px; margin: clamp(32px,7vw,90px) auto; }
+.practice-list h2 { margin: 0; color: #283e31; font-size: clamp(1.4rem,2.6vw,1.9rem); line-height: 1.4; }
+.practice-list h2 { margin-bottom: 24px; scroll-margin-top: 24px; }
+.practice-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 18px; }
+.practice-choice { display: grid; grid-template-columns: 1fr auto; align-items: center; text-align: left; background: #fffdf7; border: 1px solid #cbd3c6; border-radius: 10px; overflow: hidden; padding: 0; color: #314d39; cursor: pointer; }
+.practice-choice:hover,.practice-choice:focus-visible { border-color: #426b4e; }
+.practice-choice:focus-visible { outline: 3px solid #526f50; outline-offset: 3px; }
+.practice-art { display: block; grid-column: 1/-1; height: clamp(140px,17vw,210px); overflow: hidden; }
+.practice-art svg { display: block; width: 100%; height: 100%; border: 0; border-radius: 0; }
+.practice-caption { display: grid; gap: 4px; padding: 16px; }
+.practice-caption small { color: #566355; font-size: .8rem; }
+.practice-caption strong { font-size: 1.12rem; }
+.practice-arrow { padding-right: 16px; font-size: 1.15rem; }
+.practice-about { color: #4c594d; margin-top: 28px; font-size: .88rem; }
+.practice-about summary { cursor:pointer; width:fit-content; padding:8px 0; }
+.practice-about p { max-width: 48em; line-height: 1.8; }
+@media(max-width:700px){
+ .practice-grid { grid-template-columns: 1fr; gap: 12px; }
+ .practice-choice { grid-template-columns: 98px 1fr auto; }
+ .practice-art { grid-column: auto; height: 100px; }
+ .practice-intro { margin-bottom:22px; }
+}
+.practice-grid { gap: clamp(14px,3vw,40px); }
+.practice-choice { border: none; border-radius: 0; background: transparent; }
+.practice-choice:hover strong { text-decoration: underline; text-underline-offset: .2em; }
+.practice-caption { padding: 14px 0; }
+.practice-caption > span { color: #49564a; font-size: 1rem; }
+.practice-arrow { padding-right: 4px; }
+@media(max-width:700px){ .practice-caption { padding: 0 12px; } }
+
+.practice-welcome { max-width: 1020px; margin: clamp(32px,5vw,72px) auto 0; display: grid; grid-template-columns: 1fr 1.1fr; align-items: center; gap: clamp(28px,5vw,72px); }
+.practice-welcome h1 { margin: 0 0 20px; font-size: clamp(1.65rem,3vw,2.25rem); line-height: 1.45; color: #283e31; }
+.practice-welcome p { font-size: 1rem; line-height: 1.85; margin: 0 0 10px; max-width: 31em; }
+.practice-begin { margin-top: 24px; display: flex; align-items: center; gap: 16px; }
+.practice-begin span { color: #526052; font-size: .9375rem; }
+.practice-example { margin: 0; }
+.practice-example svg { width: 100%; display: block; aspect-ratio: 1.85; border-radius: 12px; }
+.practice-example figcaption { margin-top: 14px; color: #394c40; }
+.practice-example figcaption span { font-size: .9375rem; }
+.practice-example blockquote { font-size: 1.125rem; line-height: 1.65; margin: 6px 0 0; }
+@media(max-width:740px) {
+ .practice-welcome { grid-template-columns: 1fr; gap: 24px; }
+ .practice-welcome h1 { margin-bottom: 12px; }
+ .practice-begin { margin-top: 16px; }
+}
+
+.random-cast-note { max-width: 680px; font-size: 13px; line-height: 1.9; color: #52694e; margin: 12px 0 24px; }

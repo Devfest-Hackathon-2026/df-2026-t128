@@ -1,0 +1,167 @@
+[
+  {
+    "source": "bookstore/bookstore-bg.png",
+    "target": "bookstore/bookstore-bg.webp",
+    "width": 1672,
+    "height": 941,
+    "sourceBytes": 1954653,
+    "outputBytes": 1373448,
+    "sourceSha256": "391d84175408e56c7c8791dca2643151b94df5882d25d269391d32f7361a35c4",
+    "outputSha256": "898acc8af9b8ef038033da573aed6d374ba599f7a59bc011d7ef674361eac7b5",
+    "visiblePixelsAndAlphaUnchanged": true
+  },
+  {
+    "source": "bookstore/sato-neutral.png",
+    "target": "bookstore/sato-neutral.webp",
+    "width": 1086,
+    "height": 1448,
+    "sourceBytes": 2156884,
+    "outputBytes": 1279198,
+    "sourceSha256": "f5d1593ad3bdf956863ae91778e11240b1d061918ea9cbfcae4a5d044a47a744",
+    "outputSha256": "63dacc7c5d50e16d24a47c3faf16a4b84aa0f81f5e09201c4bb7c7a1c6c322b6",
+    "visiblePixelsAndAlphaUnchanged": true
+  },
+  {
+    "source": "bookstore/sato-confused.png",
+    "target": "bookstore/sato-confused.webp",
+    "width": 1086,
+    "height": 1448,
+    "sourceBytes": 2001838,
+    "outputBytes": 1146088,
+    "sourceSha256": "b1d627809d9ee0deb8552c9bc1a3487a8183bf664b2f94cb8728710d7defa009",
+    "outputSha256": "d196447c0bf2dff44786e6da8fe6e4b91794adf496c8d76d6bcca476b4268e25",
+    "visiblePixelsAndAlphaUnchanged": true
+  },
+  {
+    "source": "bookstore/sato-cautious.png",
+    "target": "bookstore/sato-cautious.webp",
+    "width": 1086,
+    "height": 1448,
+    "sourceBytes": 2054248,
+    "outputBytes": 1166848,
+    "sourceSha256": "650d4bd8b5edd6a47a34330ec0288f74de8603925c5ba7b8e59c6075ed38bc3f",
+    "outputSha256": "7393dc46b748b55b057d6d7555b231f842001baac659559344045a1acaf895c9",
+    "visiblePixelsAndAlphaUnchanged": true
+  },
+  {
+    "source": "bookstore/sato-relieved.png",
+    "target": "bookstore/sato-relieved.webp",
+    "width": 1086,
+    "height": 1448,
+    "sourceBytes": 1995354,
+    "outputBytes": 1148100,
+    "sourceSha256": "e3af7dfd0c70bb6557b831ea4adcc6175dbae4a623c953f02c1e95a9d5dd0338",
+    "outputSha256": "1901829068f389ec73c2eaa5c88b84faf76c6eb573527faad8860a766effb0e1",
+    "visiblePixelsAndAlphaUnchanged": true
+  },
+  {
+    "source": "supermarket/supermarket-bg.png",
+    "target": "supermarket/supermarket-bg.webp",
+    "width": 1672,
+    "height": 941,
+    "sourceBytes": 2725577,
+    "outputBytes": 1897458,
+    "sourceSha256": "06f0db110c41d8e9227664a652c00ad461aa2c0f9fb31f1bbefb04f0eb5ef1e2",
+    "outputSha256": "dd38a53569e89134792eb9d6cd3644574fb3bbfcec7caa315fd4987b8a23b322",
+    "visiblePixelsAndAlphaUnchanged": true
+  },
+  {
+    "source": "supermarket/tanaka-neutral.png",
+    "target": "supermarket/tanaka-neutral.webp",
+    "width": 1086,
+    "height": 1448,
+    "sourceBytes": 1601615,
+    "outputBytes": 974320,
+    "sourceSha256": "19e860a111efa028c665189f709d15e8369049929c49f8f76cda3ffef56b2a9a",
+    "outputSha256": "ef24f1c001f479c2d8ba32935e460caa6567ca19c814365172c3a005c8899d0a",
+    "visiblePixelsAndAlphaUnchanged": true
+  },
+  {
+    "source": "supermarket/tanaka-confused.png",
+    "target": "supermarket/tanaka-confused.webp",
+    "width": 1086,
+    "height": 1448,
+    "sourceBytes": 1497833,
+    "outputBytes": 866004,
+    "sourceSha256": "80bea0ed320da53401e1c0d9543e0cd57eece7b82cfe4e96cdca1b798e40533b",
+    "outputSha256": "fc0a6bb81157477aa4d815affdea51791bcb5b2f0627b750f4cf8f88d3202c6f",
+    "visiblePixelsAndAlphaUnchanged": true
+  },
+  {
+    "source": "supermarket/tanaka-cautious.png",
+    "target": "supermarket/tanaka-cautious.webp",
+    "width": 1086,
+    "height": 1448,
+    "sourceBytes": 1491032,
+    "outputBytes": 866708,
+    "sourceSha256": "01096dc4f6a20282c0c8c248f5245ced9c201d8ef330e95081aa0f4d38a4d37c",
+    "outputSha256": "7007830079c6ea46aa46f1f38477c24d73fa6dd2ee5726c866272944d1e6391f",
+    "visiblePixelsAndAlphaUnchanged": true
+  },
+  {
+    "source": "supermarket/tanaka-relieved.png",
+    "target": "supermarket/tanaka-relieved.webp",
+    "width": 1086,
+    "height": 1448,
+    "sourceBytes": 1476239,
+    "outputBytes": 867446,
+    "sourceSha256": "ba8371cfaf4ff3f14f5eb2f8ba9b725b77c7fddec391758ca8bfcd45f630d9f0",
+    "outputSha256": "56311437b47f0c594e725205b836a3bec2ec6987f6c34f4fcce3e3ecd6ff5eac",
+    "visiblePixelsAndAlphaUnchanged": true
+  },
+  {
+    "source": "station/station-bg.png",
+    "target": "station/station-bg.webp",
+    "width": 1672,
+    "height": 941,
+    "sourceBytes": 2649065,
+    "outputBytes": 1818630,
+    "sourceSha256": "e67911d172bedbacf93491b79e235a14b9d3f148088ea58489cf388d1b1661d8",
+    "outputSha256": "424bb3b790eefa583e0e95a86902f692de07ee9c7229a83c12c238a68372c1eb",
+    "visiblePixelsAndAlphaUnchanged": true
+  },
+  {
+    "source": "station/yamamoto-neutral.png",
+    "target": "station/yamamoto-neutral.webp",
+    "width": 1086,
+    "height": 1448,
+    "sourceBytes": 1418701,
+    "outputBytes": 883098,
+    "sourceSha256": "8e6ab21416904d21bff23bff401bae13ed8be0d04626eb629e4637f937065a12",
+    "outputSha256": "bc15108a4e77c4e54c499e6717f0d9c7b4c164d7337aa75566e997b7884ce82f",
+    "visiblePixelsAndAlphaUnchanged": true
+  },
+  {
+    "source": "station/yamamoto-confused.png",
+    "target": "station/yamamoto-confused.webp",
+    "width": 1086,
+    "height": 1448,
+    "sourceBytes": 1369541,
+    "outputBytes": 859108,
+    "sourceSha256": "feec1583717b1c6237a25fc5dfb7b02222c3fb738939e9c89d5f82c6b2cd262e",
+    "outputSha256": "7d370fa217c922a19d2758ddf3bbffd85246af23614acfbc1514c48d715b95f3",
+    "visiblePixelsAndAlphaUnchanged": true
+  },
+  {
+    "source": "station/yamamoto-cautious.png",
+    "target": "station/yamamoto-cautious.webp",
+    "width": 1086,
+    "height": 1448,
+    "sourceBytes": 1368999,
+    "outputBytes": 855656,
+    "sourceSha256": "4145e577a4ef37a257779070cd2de5caee2f758c5ec9ad59f5f09c0b17801e3d",
+    "outputSha256": "f5b6213184057153b2d11d1d5f9204288ce980a86a4b3e27352535189868a843",
+    "visiblePixelsAndAlphaUnchanged": true
+  },
+  {
+    "source": "station/yamamoto-relieved.png",
+    "target": "station/yamamoto-relieved.webp",
+    "width": 1086,
+    "height": 1448,
+    "sourceBytes": 1354608,
+    "outputBytes": 845192,
+    "sourceSha256": "5f7bd4e6c4526cd568b26b8e73dbcceae0102b56e32a9e42af04c39136b74b60",
+    "outputSha256": "09f7baf505f0c761e9f7cf6e64575855b861feae2259fa0de9f24293a8687824",
+    "visiblePixelsAndAlphaUnchanged": true
+  }
+]

@@ -1,0 +1,24 @@
+/* Material 3 roles within KindSignal's existing green palette. */
+:root {
+  --md-sys-color-primary: #345e46;
+  --md-sys-color-on-primary: #fff;
+  --md-sys-color-on-surface: #202820;
+  --md-sys-color-surface-container: #e9eee5;
+  --md-sys-color-outline: #707c70;
+}
+.app-shell :is(.primary-button,.secondary-button,.text-button,.motion-toggle,.reveal-button) {
+  min-height: 48px; border-radius: 999px; font-size: .9375rem;
+  line-height: 1.4; font-weight: 600; letter-spacing: normal;
+}
+.app-shell .primary-button { background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); box-shadow: none; border: 0; padding-inline: 24px; }
+.app-shell .primary-button:not(:disabled):hover { background: #284d38; }
+.app-shell .primary-button:not(:disabled):active { background: #213f2f; }
+.app-shell .secondary-button { color: var(--md-sys-color-primary); border: 1px solid var(--md-sys-color-outline); background: transparent; }
+.app-shell :is(.secondary-button,.text-button,.motion-toggle,.practice-choice):not(:disabled):hover { background-color: var(--md-sys-color-surface-container); }
+.app-shell :is(button,summary,a,textarea,input):focus-visible { outline: 3px solid var(--md-sys-color-primary); outline-offset: 3px; }
+.app-shell .speech-playback .reveal-button { min-width: 48px; padding: 0; }
+.app-shell .speech-playback .reveal-button:focus-visible { outline-color: white; }
+.composer #message-input { border: 1px solid var(--md-sys-color-outline); border-radius: 6px; color: var(--md-sys-color-on-surface); font-size: 1rem; line-height: 1.65; }
+.app-shell :is(.practice-intro,.page-intro,.adult-check,.start-actions p) { font-size: 1rem; line-height: 1.65; }
+
+.app-shell .header-right .motion-toggle { width: 48px; padding: 0; display: inline-grid; place-items: center; }

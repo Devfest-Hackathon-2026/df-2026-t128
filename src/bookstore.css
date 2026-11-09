@@ -1,0 +1,103 @@
+.bookstore-active.app-shell { max-width: none; padding: 0; }
+.bookstore-active>.site-header, .bookstore-active>.site-footer, .bookstore-active>main>.journey-header { display: none; }
+.bookstore-prototype { position: relative; isolation: isolate; min-height: 100svh; background: #191919; color: #fff; }
+.bookstore-header { position: relative; z-index: 2; display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 20px clamp(16px,4vw,64px); background: #111c; }
+.bookstore-header p { font-size: 10px; letter-spacing: .16em; }
+.bookstore-header h1 { font-size: clamp(20px,3vw,30px); margin: 5px 0; }
+.bookstore-header small { color: #ddd; font-size: 11px; }
+.bookstore-stage { min-height: calc(100svh - 120px); display: flex; flex-direction: column; justify-content: flex-end; padding-top: clamp(240px,36vh,420px); }
+.bookstore-background { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 45%; z-index: -3; }
+.bookstore-person { position: absolute; top: 100px; left: 40%; width: 52%; height: min(85vh,950px); object-fit: contain; object-position: center top; opacity: 0; z-index: -2; filter: drop-shadow(12px 14px 14px #0006); transition: opacity .35s ease; }
+.bookstore-person[data-visible=true] { opacity: 1; }
+.bookstore-tag { position: absolute; top: 150px; left: clamp(16px,4vw,64px); font-size: 12px; padding: 8px 12px; background: #111d; border: 1px solid #ffffff40; border-radius: 6px; }
+.bookstore-interface { width: min(900px,calc(100% - 32px)); margin: 0 auto; padding: 20px 24px; background: #111e; border: 1px solid #ffffff40; border-radius: 16px 16px 0 0; box-shadow: 0 -8px 40px #0003; }
+.bookstore-dialogue strong { color: #edd5a9; font-size: 13px; }
+.bookstore-dialogue p { line-height: 1.9; margin-top: 8px; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 25vh; overflow-y: auto; }
+.bookstore-expressions { border: 0; display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 0; }
+.bookstore-expressions legend { padding-top: 12px; font-size: 11px; color: #ddd; }
+.bookstore-expressions button { padding: 8px 18px; min-height: 44px; border: 1px solid #ffffff60; border-radius: 6px; background: #292929; color: #fff; }
+.bookstore-expressions button[aria-pressed=true] { background: #e7d1a9; color: #211b13; }
+.bookstore-interface .composer { padding: 12px 0 0; background: transparent; border-top: 1px solid #ffffff40; }
+.bookstore-interface .composer label, .bookstore-interface .composer small { color: #eee; }
+.bookstore-interface .composer textarea { background: #fff; color: #222; min-height: 70px; font-size: 16px; }
+.bookstore-interface details { margin-top: 12px; }
+.bookstore-interface details>p { white-space: pre-wrap; overflow-wrap: anywhere; padding: 8px 0; }
+.bookstore-interface details[open] { max-height: 180px; overflow-y: auto; }
+.bookstore-missing { position: absolute; top: 210px; left: clamp(16px,4vw,64px); right: 16px; max-width: 550px; background: #292929; padding: 16px; border: 1px solid #b29c75; border-radius: 8px; font-size: 13px; }
+.bookstore-missing p { line-height: 1.8; margin: 8px 0; }
+.bookstore-missing small { overflow-wrap: anywhere; }
+.bookstore-stage[data-reduced=true] * { transition: none; }
+@media(max-width:600px) { .bookstore-header { padding: 14px 16px; } .bookstore-header .secondary-button { padding: 10px; font-size: 12px; flex-shrink: 0; } .bookstore-person { top: 110px; left: 0; width: 100%; height: 70svh; } .bookstore-background { object-position: 58% center; } .bookstore-interface { width: calc(100% - 16px); padding: 16px; } .bookstore-tag { top: 130px; } .bookstore-missing { top: 185px; } .bookstore-stage { padding-top: 300px; } .bookstore-interface .composer-bottom { flex-wrap: wrap; gap: 8px; } }
+
+.bookstore-restart { margin-top: 12px; padding: 10px 14px; min-height: 44px; background: #292929; color: white; border: 1px solid #ffffff60; border-radius: 6px; }
+.bookstore-interface button:focus-visible { outline: 3px solid #edd5a9; outline-offset: 3px; }
+.bookstore-interface button:disabled { opacity: .5; cursor: default; }
+.bookstore-interface details p { white-space: pre-wrap; overflow-wrap: anywhere; padding: 8px 0; }
+.bookstore-missing { position: relative; top: auto; left: auto; right: auto; margin: 0 16px 24px; }
+@media(prefers-reduced-motion:reduce) { .bookstore-person { transition: none; } }
+
+/* Keep both expression images in the same frame throughout a crossfade. */
+.bookstore-background { animation: bookstore-camera 9s ease-out both; transform-origin: 50% 45%; }
+.bookstore-prototype { animation: bookstore-enter .45s ease-out both; }
+.bookstore-person { pointer-events: none; }
+.bookstore-header-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.bookstore-header-actions button { min-height: 44px; }
+.bookstore-header-actions button:disabled { opacity: 1; }
+.bookstore-preview summary { cursor: pointer; padding: 10px 0; font-size: 12px; color: #eee; }
+.bookstore-restart + .bookstore-restart { margin-left: 8px; }
+@keyframes bookstore-camera { from { transform: scale(1); } to { transform: scale(1.025); } }
+@keyframes bookstore-enter { from { opacity: 0; } to { opacity: 1; } }
+.app-shell[data-motion=reduced] .bookstore-background { animation: none; transform: none; }
+@media(prefers-reduced-motion:reduce) { .bookstore-background, .bookstore-prototype { animation: none; transform: none; } }
+@media(max-width:600px) { .bookstore-header { align-items: flex-start; } .bookstore-header-actions { max-width: 145px; } .bookstore-person { height: 56svh; } .bookstore-stage { padding-top: max(300px,42svh); } }
+
+/* The supplied four portraits share a 1086 x 1448 canvas. */
+.bookstore-prototype { overflow: clip; }
+.bookstore-person { left: 50%; width: min(52vw,620px); height: auto; aspect-ratio: 3 / 4; transform: translateX(-50%); object-fit: contain; object-position: center top; }
+.bookstore-interface { position: relative; z-index: 1; }
+.bookstore-header-actions button:focus-visible { outline: 3px solid #edd5a9; outline-offset: 3px; }
+@media(max-width:600px) { .bookstore-person { left: 50%; width: min(94vw,430px); height: auto; top: 130px; } .bookstore-header { flex-wrap: wrap; } .bookstore-header-actions { max-width: none; } }
+
+.character-scenarios { padding: 28px 0; }
+.character-scenarios>h2 { margin: 8px 0 12px; font-size: 26px; }
+.character-scenarios>p { line-height: 1.8; }
+.character-scenario-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 18px; margin-top: 20px; }
+.character-scenario-grid article { display: flex; flex-direction: column; gap: 12px; border: 1px solid #cdd6c2; border-radius: 14px; padding: 22px; background: #fffdf5; }
+.character-scenario-grid article>span { color: #466447; font-size: 12px; }
+.character-scenario-grid h3 { font-size: 19px; line-height: 1.6; }
+.character-scenario-grid p,.character-scenario-grid blockquote { line-height: 1.9; font-size: 13px; }
+.character-scenario-grid blockquote { margin: 0; padding: 12px; background: #edf1e7; border-radius: 8px; }
+.character-scenario-grid small { margin-top: auto; font-size: 11px; }
+.character-scenario-grid button { min-height: 44px; }
+.character-profile summary { cursor: pointer; padding: 8px 0; color: #edd5a9; font-size: 12px; }
+.character-profile p { line-height: 1.9; font-size: 13px; }
+@media(max-width:850px) { .character-scenario-grid { grid-template-columns: 1fr; } }
+
+/* New portraits use the same canvas; leave Sato's existing composition unchanged. */
+.bookstore-prototype[data-scenario=supermarket] .bookstore-background { object-position: 50% center; }
+.bookstore-prototype[data-scenario=station] .bookstore-background { object-position: 58% center; }
+@media(max-width:600px) {
+  .bookstore-prototype[data-scenario=supermarket] .bookstore-header,
+  .bookstore-prototype[data-scenario=station] .bookstore-header { min-height: 180px; }
+  .bookstore-prototype[data-scenario=supermarket] .bookstore-person,
+  .bookstore-prototype[data-scenario=station] .bookstore-person { top: 200px; width: min(92vw,410px); }
+  .bookstore-prototype[data-scenario=supermarket] .bookstore-stage,
+  .bookstore-prototype[data-scenario=station] .bookstore-stage { padding-top: max(330px,44svh); }
+}
+
+/* Updated station photo: retain the ticket gates in the narrow crop. */
+@media(max-width:600px) { .bookstore-prototype[data-scenario=station] .bookstore-background { object-position: 38% center; } }
+
+.novel-experience > .bookstore-stage { position: relative; isolation: isolate; overflow: hidden; background: #292b28; color: white; border-radius: 16px; min-height: 0; padding-top: clamp(200px, 42vh, 440px); }
+.novel-experience .bookstore-person { top: 12px; height: 100%; width: 80%; object-fit: contain; object-position: center top; }
+.novel-experience .bookstore-tag { top: 12px; left: 12px; }
+.novel-experience .bookstore-interface { position: relative; width: 100%; padding: 12px 20px; }
+.novel-experience .bookstore-interface > p { font-size: .8rem; color: #ddd; }
+
+/* Loading feedback does not move the portrait frame or block conversation controls. */
+.scene-image-status { position:absolute; top:12px; left:12px; right:12px; z-index:2; pointer-events:none; }
+.scene-image-status:empty { display:none; }
+.scene-image-status p { width:fit-content; max-width:100%; margin:0; padding:8px 12px; background:#102019ed; color:white; border-radius:8px; font-size:.875rem; line-height:1.5; }
+.scene-image-status button { pointer-events:auto; min-height:44px; margin-top:6px; padding:8px 12px; border:1px solid #edd5a9; border-radius:8px; color:white; background:#102019; }
+.scene-image-status button:focus-visible { outline:3px solid #edd5a9; outline-offset:3px; }
+.bookstore-stage[data-reduced=true] .bookstore-background { animation:none; transform:none; }

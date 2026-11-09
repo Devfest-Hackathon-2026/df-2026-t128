@@ -1,0 +1,31 @@
+{
+  "serviceAccount": "projects/kindsignal-devfest-2026/serviceAccounts/kindsignal-build@kindsignal-devfest-2026.iam.gserviceaccount.com",
+  "steps": [
+    {
+      "name": "node:24-bookworm-slim@sha256:${_NODE_DIGEST}",
+      "entrypoint": "bash",
+      "args": [
+        "-ceu",
+        "npm ci && npm test && npm run build"
+      ]
+    },
+    {
+      "name": "gcr.io/cloud-builders/docker@sha256:${_DOCKER_BUILDER_DIGEST}",
+      "args": [
+        "build",
+        "--build-arg",
+        "NODE_IMAGE=node:24-bookworm-slim@sha256:${_NODE_DIGEST}",
+        "-t",
+        "asia-northeast1-docker.pkg.dev/$PROJECT_ID/kindsignal/kindsignal-api:$BUILD_ID",
+        "."
+      ]
+    }
+  ],
+  "images": [
+    "asia-northeast1-docker.pkg.dev/$PROJECT_ID/kindsignal/kindsignal-api:$BUILD_ID"
+  ],
+  "options": {
+    "logging": "CLOUD_LOGGING_ONLY"
+  },
+  "timeout": "1200s"
+}

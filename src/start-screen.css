@@ -1,0 +1,13 @@
+.app-shell.start-active { padding: 0; max-width: none; }
+.start-active>.site-header,.start-active>.site-footer,.start-active>.team-credit { display: none; }
+.start-screen { min-height: 100svh; display: grid; place-items: center; padding: max(32px,env(safe-area-inset-top)) 24px max(32px,env(safe-area-inset-bottom)); background: #f5f5ec; }
+.start-screen-content { display: flex; flex-direction: column; align-items: center; text-align: center; width: 100%; }
+.start-screen-mark svg { width: 82px; height: 82px; }
+.start-screen h1 { font-size: clamp(42px,9vw,88px); font-weight: 500; letter-spacing: -.055em; line-height: 1.2; color: #304c39; margin: 28px 0 22px; }
+.start-screen-message { color: #53694d; font-size: clamp(14px,2.2vw,18px); line-height: 1.9; letter-spacing: .08em; margin: 0 0 46px; }
+.start-message-break { display: none; }
+.start-screen h1 span { color: #a38d5e; }
+.start-screen-button { display: flex; align-items: center; justify-content: center; gap: 32px; min-height: 56px; width: min(100%,310px); padding: 17px 26px; border: 1px solid #426048; border-radius: 40px; background: #365a45; color: #fffdf5; font-size: 15px; letter-spacing: .06em; cursor: pointer; transition: background .2s ease; }
+.start-screen-button:hover { background: #284533; }
+.start-screen-button:focus-visible { outline: 3px solid #a38d5e; outline-offset: 6px; }
+@media(max-width:500px) { .start-screen-mark svg { width: 66px; height: 66px; } .start-screen h1 { margin: 24px 0 20px; } .start-message-break { display: initial; } }

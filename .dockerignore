@@ -1,0 +1,19 @@
+# Allowlist: local credentials, Git history and unrelated files never enter the build context.
+**
+!package.json
+!package-lock.json
+!tsconfig.json
+!tsconfig.server.json
+!vite.config.ts
+!index.html
+!src/
+!src/**
+!server/
+!server/**
+!shared/
+!shared/**
+!public/
+!public/**
+!Dockerfile
+!.dockerignore
+**/*.test.ts

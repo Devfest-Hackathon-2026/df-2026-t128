@@ -1,0 +1,8 @@
+{
+  "title": "KindSignal Vertex Predictor",
+  "description": "Only Vertex publisher model inference for the KindSignal runtime; no model, data, IAM or resource administration.",
+  "stage": "GA",
+  "includedPermissions": [
+    "aiplatform.endpoints.predict"
+  ]
+}
