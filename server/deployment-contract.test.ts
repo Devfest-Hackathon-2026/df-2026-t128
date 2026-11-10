@@ -5,6 +5,22 @@ import test from 'node:test';
 
 const read = (path: string) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
+test('Docker build includes the license checker without opening the other scripts', async () => {
+  const rules = (await read('.dockerignore')).split(/\r?\n/).map(line => line.trim()).filter(line => line && !line.startsWith('#'));
+  assert.equal(rules[0], '**', 'Build context must remain deny-by-default');
+  // Docker re-includes descendants when a parent is allowed. Re-exclude them
+  // before allowing the one build-time checker, not the whole scripts tree.
+  const directoryRule = rules.indexOf('!scripts/');
+  assert.ok(directoryRule > 0);
+  assert.deepEqual(rules.slice(directoryRule, directoryRule + 3), ['!scripts/', 'scripts/**', '!scripts/third-party-notices.mjs']);
+  assert.deepEqual(rules.filter(rule => rule.startsWith('!scripts/')), ['!scripts/', '!scripts/third-party-notices.mjs']);
+  assert.ok(rules.includes('!public/**'), 'Public third-party notices must enter the build context');
+  const manifest = JSON.parse(await read('package.json'));
+  assert.match(manifest.scripts.build, /^npm run licenses:check && /);
+  assert.equal(manifest.scripts['licenses:check'], 'node scripts/third-party-notices.mjs --check');
+  assert.match(await read('scripts/third-party-notices.mjs'), /public\/THIRD_PARTY_NOTICES\.txt/);
+});
+
 test('runtime role remains inference-only without resource or IAM administration', async () => {
   const role = JSON.parse(await read('infra/iam/runtime-vertex-role.json'));
   assert.deepEqual(role.includedPermissions, ['aiplatform.endpoints.predict']);
