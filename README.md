@@ -28,3 +28,5 @@ React と Express を Cloud Run で配信しています。本番では Vertex A
 判断の練習を目的とし、診断や実在の人物の再現、対応の採点は行いません。[声かけの参照資料](docs/guidelines.md)と、各場面の素材説明（[スーパー](public/supermarket/ASSETS.md)・[書店](public/bookstore/ASSETS.md)・[駅](public/station/ASSETS.md)）を同梱しています。
 
 確認コマンド：`npm test`、`npm run build`、`node scripts/deployment-smoke.mjs`。
+
+ブラウザに配布するライブラリの[ライセンスと著作権表示](public/THIRD_PARTY_NOTICES.txt)は、公開画面のフッターにある「OSSライセンス」からも確認できます。[対象と更新手順](docs/third-party-notices.md)。

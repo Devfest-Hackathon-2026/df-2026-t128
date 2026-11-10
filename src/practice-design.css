@@ -107,3 +107,5 @@ body { background: var(--ks-stage); }
   display:grid; grid-template-columns:1fr; gap:1.5rem;
 }
 .app-shell[data-screen=reflection] .reflection-grid article { text-align:start; }
+
+.team-credit a { display:inline-flex; align-items:center; min-height:44px; margin-inline-start:16px; color:inherit; text-underline-offset:3px; }

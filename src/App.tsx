@@ -290,11 +290,9 @@ function App() {
         <p className="storage-note">履歴は最長30分、または次の練習を始めるまで残ります。</p>
       </section>}
     </main>
-    <footer className="team-credit">OIF Team B</footer>
+    <footer className="team-credit">OIF Team B <a href="/THIRD_PARTY_NOTICES.txt" target="_blank" rel="noopener noreferrer" aria-label="OSSライセンス（新しいタブで開きます）">OSSライセンス</a></footer>
 
   </div>;
 }
 
 export default App;
-
-

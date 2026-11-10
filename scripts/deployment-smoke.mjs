@@ -80,6 +80,10 @@ try {
     assert.match(response.headers.get('content-type') ?? '', asset.endsWith('.css') ? /text\/css/ : /javascript/);
     assert.ok((await response.text()).length > 0);
   }
+  const notices = await request('/THIRD_PARTY_NOTICES.txt');
+  assert.equal(notices.status, 200, 'Third-party notices must be publicly served');
+  assert.match(notices.headers.get('content-type') ?? '', /text\/plain/);
+  assert.equal(await notices.text(), await readFile('public/THIRD_PARTY_NOTICES.txt', 'utf8'), 'Distributed notices must exactly preserve the source file');
   assert.equal((await (await request('/api/config')).json()).mode, 'demo');
   const { scenarios } = await (await request('/api/scenarios')).json();
   assert.equal(scenarios.length, 3);
@@ -133,7 +137,7 @@ try {
     assert.deepEqual(outcome, [0, null]);
     console.log('Graceful SIGTERM shutdown passed.');
   }
-  console.log('Deployment smoke passed: Hosting config, ephemeral startup guard, anonymous cookie ownership, local built JS/CSS, 3 demo scenarios, reflection, idempotent deletion, post-deletion rejection. No cloud calls.');
+  console.log('Deployment smoke passed: Hosting config, ephemeral startup guard, anonymous cookie ownership, local built JS/CSS and exact third-party notices, 3 demo scenarios, reflection, idempotent deletion, post-deletion rejection. No cloud calls.');
 } finally { await stop(server); }
 
 // Startup/config checks only: no generation, credentials lookup or cloud calls.
